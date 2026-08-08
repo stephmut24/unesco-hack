@@ -1,120 +1,119 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { EntryScreen } from './screens/EntryScreen'
+import { AnalysisScreen } from './screens/AnalysisScreen'
+import { CoAnalysisScreen } from './screens/CoAnalysisScreen'
+import { ReflectionScreen } from './screens/ReflectionScreen'
+import { VerdictScreen } from './screens/VerdictScreen'
+import { COPY, MOCK_DIMENSIONS } from './data/content'
+import type { DimensionKey, Lang, Step, UserChoice } from './types'
+
+const emptyChoices = (): Record<DimensionKey, UserChoice> =>
+  Object.fromEntries(MOCK_DIMENSIONS.map((d) => [d.key, null])) as Record<
+    DimensionKey,
+    UserChoice
+  >
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [lang, setLang] = useState<Lang>('fr')
+  const [step, setStep] = useState<Step>('entry')
+  const [text, setText] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [choices, setChoices] = useState(emptyChoices)
+  const [reflection, setReflection] = useState('')
+  const [offline, setOffline] = useState(!navigator.onLine)
+
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
+
+  const imagePreview = useMemo(() => {
+    if (!imageFile) return null
+    return URL.createObjectURL(imageFile)
+  }, [imageFile])
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview)
+    }
+  }, [imagePreview])
+
+  useEffect(() => {
+    const on = () => setOffline(false)
+    const off = () => setOffline(true)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => {
+      window.removeEventListener('online', on)
+      window.removeEventListener('offline', off)
+    }
+  }, [])
+
+  const handleAnalysisDone = useCallback(() => setStep('coanalysis'), [])
+
+  function restart() {
+    setStep('entry')
+    setText('')
+    setImageFile(null)
+    setChoices(emptyChoices())
+    setReflection('')
+  }
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+      {offline ? (
+        <div
+          role="status"
+          className="fixed inset-x-0 top-0 z-50 bg-amber-50 px-4 py-2.5 text-center text-sm font-medium text-ink shadow-sm"
         >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+          {COPY[lang].offline}
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      ) : null}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      {step === 'entry' && (
+        <EntryScreen
+          lang={lang}
+          onLangChange={setLang}
+          text={text}
+          onTextChange={setText}
+          imagePreview={imagePreview}
+          onImageSelect={setImageFile}
+          onLaunch={() => setStep('analysis')}
+        />
+      )}
+
+      {step === 'analysis' && (
+        <AnalysisScreen lang={lang} onDone={handleAnalysisDone} />
+      )}
+
+      {step === 'coanalysis' && (
+        <CoAnalysisScreen
+          lang={lang}
+          onLangChange={setLang}
+          choices={choices}
+          onChoice={(key, choice) =>
+            setChoices((prev) => ({ ...prev, [key]: choice }))
+          }
+          onContinue={() => setStep('reflection')}
+        />
+      )}
+
+      {step === 'reflection' && (
+        <ReflectionScreen
+          lang={lang}
+          value={reflection}
+          onChange={setReflection}
+          onContinue={() => setStep('verdict')}
+        />
+      )}
+
+      {step === 'verdict' && (
+        <VerdictScreen
+          lang={lang}
+          choices={choices}
+          reflection={reflection}
+          onRestart={restart}
+        />
+      )}
     </>
   )
 }
