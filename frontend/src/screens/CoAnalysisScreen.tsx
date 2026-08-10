@@ -1,11 +1,13 @@
 import { AnalysisCard } from '../components/AnalysisCard'
 import { AppShell } from '../components/AppShell'
-import { COPY, getMockDimensions } from '../data/content'
-import type { DimensionKey, Lang, UserChoice } from '../types'
+import { COPY } from '../data/content'
+import type { DimensionEval, DimensionKey, Lang, UserChoice } from '../types'
 
 type Props = {
   lang: Lang
   onLangChange: (lang: Lang) => void
+  dimensions: DimensionEval[]
+  degraded?: boolean
   choices: Record<DimensionKey, UserChoice>
   onChoice: (key: DimensionKey, choice: Exclude<UserChoice, null>) => void
   onContinue: () => void
@@ -14,12 +16,13 @@ type Props = {
 export function CoAnalysisScreen({
   lang,
   onLangChange,
+  dimensions,
+  degraded,
   choices,
   onChoice,
   onContinue,
 }: Props) {
   const copy = COPY[lang]
-  const dimensions = getMockDimensions(lang)
   const answered = dimensions.every((d) => choices[d.key] !== null)
   const answeredCount = dimensions.filter((d) => choices[d.key] !== null).length
 
@@ -34,7 +37,7 @@ export function CoAnalysisScreen({
       footer={
         <button
           type="button"
-          disabled={!answered}
+          disabled={!answered || dimensions.length === 0}
           onClick={onContinue}
           className="btn-primary"
         >
@@ -43,23 +46,35 @@ export function CoAnalysisScreen({
       }
     >
       <div className="space-y-4">
-        {dimensions.map((dimension, index) => (
-          <AnalysisCard
-            key={dimension.key}
-            dimension={dimension}
-            index={index}
-            choice={choices[dimension.key]}
-            whyLabel={copy.why}
-            evidenceLabel={copy.evidenceLabel}
-            yourDecision={copy.yourDecision}
-            confirmLabel={copy.confirm}
-            modifyLabel={copy.modify}
-            autoSuggestionLabel={copy.autoSuggestionLabel}
-            autoSuggestionText={copy.autoSuggestionText}
-            confidenceLabel={copy.confidence(dimension.confidence)}
-            onChoice={(choice) => onChoice(dimension.key, choice)}
-          />
-        ))}
+        {degraded ? (
+          <p role="status" className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">
+            Analyse technique limitée — certains services étaient indisponibles.
+          </p>
+        ) : null}
+
+        {dimensions.length === 0 ? (
+          <p role="status" className="rounded-xl bg-panel px-4 py-6 text-center text-sm text-muted">
+            Aucune analyse disponible. Relance une vérification depuis l&apos;écran précédent.
+          </p>
+        ) : (
+          dimensions.map((dimension, index) => (
+            <AnalysisCard
+              key={dimension.key}
+              dimension={dimension}
+              index={index}
+              choice={choices[dimension.key]}
+              whyLabel={copy.why}
+              evidenceLabel={copy.evidenceLabel}
+              yourDecision={copy.yourDecision}
+              confirmLabel={copy.confirm}
+              modifyLabel={copy.modify}
+              autoSuggestionLabel={copy.autoSuggestionLabel}
+              autoSuggestionText={copy.autoSuggestionText}
+              confidenceLabel={copy.confidence(dimension.confidence)}
+              onChoice={(choice) => onChoice(dimension.key, choice)}
+            />
+          ))
+        )}
       </div>
     </AppShell>
   )

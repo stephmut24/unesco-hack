@@ -14,6 +14,7 @@ type Props = {
   imagePreview: string | null
   onImageSelect: (file: File | null) => void
   onLaunch: () => void
+  error?: string | null
 }
 
 export function EntryScreen({
@@ -24,6 +25,7 @@ export function EntryScreen({
   imagePreview,
   onImageSelect,
   onLaunch,
+  error,
 }: Props) {
   const copy = COPY[lang]
   const inputRef = useRef<HTMLInputElement>(null)
@@ -66,6 +68,11 @@ export function EntryScreen({
 
         <motion.div className="lesson-card p-5" variants={pageBlock}>
           <div className="space-y-3.5">
+            {error ? (
+              <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-danger">
+                {error}
+              </p>
+            ) : null}
             <textarea
               value={text}
               onChange={(e) => onTextChange(e.target.value)}

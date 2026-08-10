@@ -1,147 +1,25 @@
-import type { DimensionEval, Lang } from '../types'
+import type { DimensionLabel, Lang } from '../types'
 
-const DIMENSIONS_FR: DimensionEval[] = [
-  {
-    key: 'source',
-    title: 'SOURCE',
-    question: "C'est qui le chef ?",
-    aiSuggestion: 'Douteux',
-    confidence: 0.89,
-    status: 'warning',
-    technicalReasons: [
-      'Domaine créé il y a 48h',
-      'Aucune mention légale trouvée',
-      'Protocole non sécurisé (HTTP)',
-    ],
-  },
-  {
-    key: 'evidence',
-    title: 'EVIDENCE',
-    question: 'Y a-t-il des preuves solides ?',
-    aiSuggestion: 'Faible',
-    confidence: 0.76,
-    status: 'risk',
-    technicalReasons: [
-      'Aucune source primaire citée',
-      'Capture isolée, contexte manquant',
-      'Signalé 4 fois sur PesaCheck',
-    ],
-  },
-  {
-    key: 'intent',
-    title: 'INTENT',
-    question: 'Que cherche ce contenu ?',
-    aiSuggestion: 'Clickbait probable',
-    confidence: 0.82,
-    status: 'warning',
-    technicalReasons: [
-      'Langage sensationnaliste détecté',
-      'Urgence artificielle (« partage vite »)',
-      'Écart fort entre titre et corps',
-    ],
-  },
-  {
-    key: 'transmission',
-    title: 'TRANSMISSION',
-    question: 'Que normalise ce partage ?',
-    aiSuggestion: 'Méfiance toxique',
-    confidence: 0.71,
-    status: 'warning',
-    technicalReasons: [
-      'Encouragement au partage sans vérification',
-      'Cadre « nous vs eux » dominant',
-      'Peu de place pour le doute raisonnable',
-    ],
-  },
-  {
-    key: 'impact',
-    title: 'IMPACT',
-    question: 'Quel effet sur la société ?',
-    aiSuggestion: 'Risque élevé',
-    confidence: 0.84,
-    status: 'risk',
-    technicalReasons: [
-      'Peut polariser rapidement en RDC',
-      'Amplifie la rumeur avant les faits',
-      'Faible utilité publique mesurable',
-    ],
-  },
+const DIMENSION_LABELS_FR: DimensionLabel[] = [
+  { key: 'source', title: 'SOURCE', question: "C'est qui le chef ?" },
+  { key: 'evidence', title: 'EVIDENCE', question: 'Y a-t-il des preuves solides ?' },
+  { key: 'intent', title: 'INTENT', question: 'Que cherche ce contenu ?' },
+  { key: 'transmission', title: 'TRANSMISSION', question: 'Que normalise ce partage ?' },
+  { key: 'impact', title: 'IMPACT', question: 'Quel effet sur la société ?' },
 ]
 
-const DIMENSIONS_EN: DimensionEval[] = [
-  {
-    key: 'source',
-    title: 'SOURCE',
-    question: 'Who is behind this?',
-    aiSuggestion: 'Doubtful',
-    confidence: 0.89,
-    status: 'warning',
-    technicalReasons: [
-      'Domain created 48 hours ago',
-      'No legal notice found',
-      'Insecure protocol (HTTP)',
-    ],
-  },
-  {
-    key: 'evidence',
-    title: 'EVIDENCE',
-    question: 'Is there solid proof?',
-    aiSuggestion: 'Weak',
-    confidence: 0.76,
-    status: 'risk',
-    technicalReasons: [
-      'No primary source cited',
-      'Isolated screenshot, missing context',
-      'Flagged 4 times on PesaCheck',
-    ],
-  },
-  {
-    key: 'intent',
-    title: 'INTENT',
-    question: 'What is this content trying to do?',
-    aiSuggestion: 'Likely clickbait',
-    confidence: 0.82,
-    status: 'warning',
-    technicalReasons: [
-      'Sensational language detected',
-      'Artificial urgency (“share fast”)',
-      'Strong mismatch between title and body',
-    ],
-  },
-  {
-    key: 'transmission',
-    title: 'TRANSMISSION',
-    question: 'What does sharing this normalize?',
-    aiSuggestion: 'Toxic distrust',
-    confidence: 0.71,
-    status: 'warning',
-    technicalReasons: [
-      'Encourages sharing without verification',
-      'Dominant “us vs them” framing',
-      'Little room for reasonable doubt',
-    ],
-  },
-  {
-    key: 'impact',
-    title: 'IMPACT',
-    question: 'What effect on society?',
-    aiSuggestion: 'High risk',
-    confidence: 0.84,
-    status: 'risk',
-    technicalReasons: [
-      'Can polarize quickly in the DRC',
-      'Amplifies rumor before facts',
-      'Low measurable public value',
-    ],
-  },
+const DIMENSION_LABELS_EN: DimensionLabel[] = [
+  { key: 'source', title: 'SOURCE', question: 'Who is behind this?' },
+  { key: 'evidence', title: 'EVIDENCE', question: 'Is there solid proof?' },
+  { key: 'intent', title: 'INTENT', question: 'What is this content trying to do?' },
+  { key: 'transmission', title: 'TRANSMISSION', question: 'What does sharing this normalize?' },
+  { key: 'impact', title: 'IMPACT', question: 'What effect on society?' },
 ]
 
-/** Fallback: FR structure for LN/SW until fully localized */
-export const MOCK_DIMENSIONS: DimensionEval[] = DIMENSIONS_FR
-
-export function getMockDimensions(lang: Lang): DimensionEval[] {
-  if (lang === 'en') return DIMENSIONS_EN
-  return DIMENSIONS_FR
+/** Labels i18n des 5 dimensions (sans données IA — celles-ci viennent du backend) */
+export function getDimensionLabels(lang: Lang): DimensionLabel[] {
+  if (lang === 'en') return DIMENSION_LABELS_EN
+  return DIMENSION_LABELS_FR
 }
 
 export const ANALYSIS_STEPS: Record<Lang, readonly string[]> = {
