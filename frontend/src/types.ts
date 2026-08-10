@@ -1,6 +1,12 @@
 export type Lang = 'fr' | 'en' | 'ln' | 'sw'
 
-export type Step = 'entry' | 'analysis' | 'coanalysis' | 'reflection' | 'verdict'
+export type Step =
+  | 'landing'
+  | 'entry'
+  | 'analysis'
+  | 'coanalysis'
+  | 'reflection'
+  | 'verdict'
 
 export type DimensionKey =
   | 'source'

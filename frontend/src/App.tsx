@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { LandingScreen } from './screens/LandingScreen'
 import { EntryScreen } from './screens/EntryScreen'
 import { AnalysisScreen } from './screens/AnalysisScreen'
 import { CoAnalysisScreen } from './screens/CoAnalysisScreen'
 import { ReflectionScreen } from './screens/ReflectionScreen'
 import { VerdictScreen } from './screens/VerdictScreen'
+import { PageTransition } from './components/PageTransition'
 import { COPY, MOCK_DIMENSIONS } from './data/content'
 import type { DimensionKey, Lang, Step, UserChoice } from './types'
 
@@ -15,7 +17,7 @@ const emptyChoices = (): Record<DimensionKey, UserChoice> =>
 
 function App() {
   const [lang, setLang] = useState<Lang>('fr')
-  const [step, setStep] = useState<Step>('entry')
+  const [step, setStep] = useState<Step>('landing')
   const [text, setText] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [choices, setChoices] = useState(emptyChoices)
@@ -51,7 +53,7 @@ function App() {
   const handleAnalysisDone = useCallback(() => setStep('coanalysis'), [])
 
   function restart() {
-    setStep('entry')
+    setStep('landing')
     setText('')
     setImageFile(null)
     setChoices(emptyChoices())
@@ -69,51 +71,61 @@ function App() {
         </div>
       ) : null}
 
-      {step === 'entry' && (
-        <EntryScreen
-          lang={lang}
-          onLangChange={setLang}
-          text={text}
-          onTextChange={setText}
-          imagePreview={imagePreview}
-          onImageSelect={setImageFile}
-          onLaunch={() => setStep('analysis')}
-        />
-      )}
+      <PageTransition step={step}>
+        {step === 'landing' ? (
+          <LandingScreen
+            lang={lang}
+            onLangChange={setLang}
+            onStart={() => setStep('entry')}
+          />
+        ) : null}
 
-      {step === 'analysis' && (
-        <AnalysisScreen lang={lang} onDone={handleAnalysisDone} />
-      )}
+        {step === 'entry' ? (
+          <EntryScreen
+            lang={lang}
+            onLangChange={setLang}
+            text={text}
+            onTextChange={setText}
+            imagePreview={imagePreview}
+            onImageSelect={setImageFile}
+            onLaunch={() => setStep('analysis')}
+          />
+        ) : null}
 
-      {step === 'coanalysis' && (
-        <CoAnalysisScreen
-          lang={lang}
-          onLangChange={setLang}
-          choices={choices}
-          onChoice={(key, choice) =>
-            setChoices((prev) => ({ ...prev, [key]: choice }))
-          }
-          onContinue={() => setStep('reflection')}
-        />
-      )}
+        {step === 'analysis' ? (
+          <AnalysisScreen lang={lang} onDone={handleAnalysisDone} />
+        ) : null}
 
-      {step === 'reflection' && (
-        <ReflectionScreen
-          lang={lang}
-          value={reflection}
-          onChange={setReflection}
-          onContinue={() => setStep('verdict')}
-        />
-      )}
+        {step === 'coanalysis' ? (
+          <CoAnalysisScreen
+            lang={lang}
+            onLangChange={setLang}
+            choices={choices}
+            onChoice={(key, choice) =>
+              setChoices((prev) => ({ ...prev, [key]: choice }))
+            }
+            onContinue={() => setStep('reflection')}
+          />
+        ) : null}
 
-      {step === 'verdict' && (
-        <VerdictScreen
-          lang={lang}
-          choices={choices}
-          reflection={reflection}
-          onRestart={restart}
-        />
-      )}
+        {step === 'reflection' ? (
+          <ReflectionScreen
+            lang={lang}
+            value={reflection}
+            onChange={setReflection}
+            onContinue={() => setStep('verdict')}
+          />
+        ) : null}
+
+        {step === 'verdict' ? (
+          <VerdictScreen
+            lang={lang}
+            choices={choices}
+            reflection={reflection}
+            onRestart={restart}
+          />
+        ) : null}
+      </PageTransition>
     </>
   )
 }

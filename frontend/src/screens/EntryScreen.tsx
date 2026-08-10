@@ -1,7 +1,9 @@
 import { ImagePlus, X } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
 import { useRef } from 'react'
 import { AppShell } from '../components/AppShell'
 import { COPY } from '../data/content'
+import { pageBlock } from '../motion/variants'
 import type { Lang } from '../types'
 
 type Props = {
@@ -26,6 +28,7 @@ export function EntryScreen({
   const copy = COPY[lang]
   const inputRef = useRef<HTMLInputElement>(null)
   const canLaunch = text.trim().length > 0 || Boolean(imagePreview)
+  const reduce = useReducedMotion()
 
   return (
     <AppShell
@@ -35,8 +38,21 @@ export function EntryScreen({
       lessonEyebrow={`01 · ${copy.depositTitle}`}
       title={copy.tagline}
     >
-      <div className="fade-in grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] sm:items-stretch">
-        <aside className="lesson-card goal-card flex flex-col justify-between p-5">
+      <motion.div
+        className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] sm:items-stretch"
+        initial={reduce ? false : 'hidden'}
+        animate="show"
+        variants={{
+          hidden: {},
+          show: {
+            transition: { staggerChildren: 0.1, delayChildren: 0.05 },
+          },
+        }}
+      >
+        <motion.aside
+          className="lesson-card goal-card flex flex-col justify-between p-5"
+          variants={pageBlock}
+        >
           <div>
             <p className="font-display text-[0.68rem] font-bold uppercase tracking-wider text-accent">
               {copy.learnLabel}
@@ -46,9 +62,9 @@ export function EntryScreen({
             </p>
           </div>
           <p className="mt-6 text-xs leading-relaxed text-muted">{copy.footer}</p>
-        </aside>
+        </motion.aside>
 
-        <div className="lesson-card p-5">
+        <motion.div className="lesson-card p-5" variants={pageBlock}>
           <div className="space-y-3.5">
             <textarea
               value={text}
@@ -109,8 +125,8 @@ export function EntryScreen({
               {copy.launch}
             </button>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </AppShell>
   )
 }
