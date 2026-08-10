@@ -174,6 +174,9 @@ export const ANALYSIS_STEPS: Record<Lang, readonly string[]> = {
 type Copy = {
   brand: string
   tagline: string
+  landingHeadline: string
+  landingLead: string
+  landingCta: string
   moduleLabel: string
   learnLabel: string
   railLabels: string[]
@@ -220,6 +223,10 @@ export const COPY: Record<Lang, Copy> = {
   fr: {
     brand: 'Media Compass',
     tagline: 'Apprendre à penser avant de partager',
+    landingHeadline: 'Apprendre à orienter ton jugement avant de partager',
+    landingLead:
+      'Media Compass t’entraîne à lire un contenu, observer des indices, puis décider — sans laisser l’outil penser à ta place.',
+    landingCta: 'Entrer dans le module',
     moduleLabel: 'Module de citoyenneté numérique',
     learnLabel: 'Objectif d’apprentissage',
     railLabels: ['Collecte', 'Diagnostic', 'Évaluation', 'Réflexion', 'Synthèse'],
@@ -277,6 +284,10 @@ export const COPY: Record<Lang, Copy> = {
   en: {
     brand: 'Media Compass',
     tagline: 'Learn to think before you share',
+    landingHeadline: 'Learn to orient your judgment before you share',
+    landingLead:
+      'Media Compass trains you to read content, observe signals, then decide — without letting the tool think for you.',
+    landingCta: 'Enter the module',
     moduleLabel: 'Digital citizenship module',
     learnLabel: 'Learning goal',
     railLabels: ['Collect', 'Diagnose', 'Evaluate', 'Reflect', 'Summary'],
@@ -334,6 +345,10 @@ export const COPY: Record<Lang, Copy> = {
   ln: {
     brand: 'Media Compass',
     tagline: 'Koyekola kanisa liboso ya kokabola',
+    landingHeadline: 'Koyekola kozwa jugement liboso ya kokabola',
+    landingLead:
+      'Media Compass epesa nzela ya kotánga contenu, kotala ba indices, mpe kozwa décision — outil ekosala te na esika na yo.',
+    landingCta: 'Kokota na module',
     moduleLabel: 'Module ya citoyenneté numérique',
     learnLabel: 'Objectif ya koyekola',
     railLabels: ['Kobunda', 'Diagnostic', 'Évaluation', 'Réflexion', 'Synthèse'],
@@ -388,6 +403,10 @@ export const COPY: Record<Lang, Copy> = {
   sw: {
     brand: 'Media Compass',
     tagline: 'Jifunze kufikiria kabla ya kushiriki',
+    landingHeadline: 'Jifunze kuekeza uamuzi wako kabla ya kushiriki',
+    landingLead:
+      'Media Compass inakufundisha kusoma maudhui, kuona ishara, kisha kuamua — bila zana kufikiria kwa niaba yako.',
+    landingCta: 'Ingia moduli',
     moduleLabel: 'Moduli ya uraia wa kidijitali',
     learnLabel: 'Lengo la kujifunza',
     railLabels: ['Kusanya', 'Uchunguzi', 'Tathmini', 'Tafakari', 'Muhtasari'],
