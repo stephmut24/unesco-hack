@@ -6,7 +6,7 @@ import { CoAnalysisScreen } from './screens/CoAnalysisScreen'
 import { ReflectionScreen } from './screens/ReflectionScreen'
 import { VerdictScreen } from './screens/VerdictScreen'
 import { PageTransition } from './components/PageTransition'
-import { runMediaAnalysis } from './api/analysis'
+import { runMediaAnalysisPipeline } from './api/analysis'
 import { saveUserEvaluation } from './api/evaluation'
 import { COPY } from './data/content'
 import { mapToDimensions } from './lib/mapAnalysis'
@@ -51,7 +51,8 @@ function App() {
   const [offline, setOffline] = useState(!navigator.onLine)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [dimensions, setDimensions] = useState<DimensionEval[]>([])
-  const [animationDone, setAnimationDone] = useState(false)
+  const [completedPhases, setCompletedPhases] = useState(0)
+  const [phaseSummaries, setPhaseSummaries] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -80,14 +81,6 @@ function App() {
     }
   }, [])
 
-  // Passage à co-analyse quand animation ET API sont prêtes
-  useEffect(() => {
-    if (step === 'analysis' && animationDone && analysisResult) {
-      setStep('coanalysis')
-      setAnimationDone(false)
-    }
-  }, [step, animationDone, analysisResult])
-
   const verdict = useMemo(() => {
     if (dimensions.length === 0) return null
     return computeVerdict(dimensions, choices, lang)
@@ -98,14 +91,23 @@ function App() {
     setError(null)
     setAnalysisResult(null)
     setDimensions([])
-    setAnimationDone(false)
+    setCompletedPhases(0)
+    setPhaseSummaries([])
     setChoices(emptyChoices())
 
     try {
       const input = await buildAnalysisInput(text, imageFile, lang)
-      const result = await runMediaAnalysis(input)
+      const result = await runMediaAnalysisPipeline(input, ({ completedPhases: done, summary }) => {
+        setCompletedPhases(done)
+        setPhaseSummaries((prev) => {
+          const next = [...prev]
+          next[done - 1] = summary
+          return next
+        })
+      })
       setAnalysisResult(result)
       setDimensions(mapToDimensions(result.dimensions, lang))
+      setStep('coanalysis')
     } catch (err) {
       console.error('Erreur boussole:', err)
       setError(
@@ -115,10 +117,6 @@ function App() {
       )
       setStep('entry')
     }
-  }
-
-  const handleAnalysisAnimationDone = () => {
-    setAnimationDone(true)
   }
 
   const handleReflectionContinue = async () => {
@@ -145,8 +143,9 @@ function App() {
     setReflection('')
     setAnalysisResult(null)
     setDimensions([])
+    setCompletedPhases(0)
+    setPhaseSummaries([])
     setError(null)
-    setAnimationDone(false)
   }
 
   return (
@@ -183,7 +182,11 @@ function App() {
         ) : null}
 
         {step === 'analysis' ? (
-          <AnalysisScreen lang={lang} onDone={handleAnalysisAnimationDone} />
+          <AnalysisScreen
+            lang={lang}
+            completedPhases={completedPhases}
+            phaseSummaries={phaseSummaries}
+          />
         ) : null}
 
         {step === 'coanalysis' ? (

@@ -27,6 +27,25 @@ export type RiskLevel = 'safe' | 'warning' | 'risk'
 
 export type ContentType = 'url' | 'text' | 'image'
 
+export type AnalysisPhase = 'source' | 'evidence' | 'technical' | 'synthesis'
+
+export const ANALYSIS_PHASES: AnalysisPhase[] = [
+  'source',
+  'evidence',
+  'technical',
+  'synthesis',
+]
+
+/** Contexte accumulé entre les phases du pipeline */
+export type PipelineContext = {
+  techFacts?: TechFacts & Record<string, unknown>
+  evidenceFacts?: Record<string, unknown>
+  technicalSignals?: string[]
+  degraded?: boolean
+  aiProvider?: string
+  aiError?: string
+}
+
 /** Labels i18n statiques (titre + question) — les données IA viennent du backend */
 export type DimensionLabel = {
   key: DimensionKey
@@ -75,6 +94,19 @@ export type AnalysisInput = {
   imageBase64?: string
   lang: Lang
   sessionId: string
+  phase?: AnalysisPhase
+  context?: PipelineContext
+}
+
+/** Résultat d'une phase du pipeline */
+export type PhaseResponse = {
+  success: boolean
+  phase: AnalysisPhase
+  phaseIndex: number
+  summary: string
+  context: PipelineContext
+  result?: AnalysisResult
+  error?: string
 }
 
 /** Réponse normalisée après analyse */

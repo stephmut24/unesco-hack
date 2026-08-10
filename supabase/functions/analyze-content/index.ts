@@ -1,6 +1,13 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { buildAnalysisPrompt, buildMockEvaluation } from './prompt.ts'
+import {
+  ANALYSIS_PHASES,
+  type AnalysisPhase,
+  type PipelineContext,
+  runEvidencePhase,
+  runSourcePhase,
+  runTechnicalPhase,
+} from './phases.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,11 +18,13 @@ type ContentType = 'url' | 'text' | 'image'
 type Lang = 'fr' | 'en' | 'ln' | 'sw'
 
 type AnalysisRequest = {
+  phase?: AnalysisPhase
   type: ContentType
   value: string
   imageBase64?: string
   lang?: Lang
   sessionId?: string
+  context?: PipelineContext
 }
 
 const DIMENSION_KEYS = ['source', 'evidence', 'intent', 'transmission', 'impact'] as const
@@ -29,22 +38,6 @@ function hashContent(type: ContentType, value: string): string {
     }
   }
   return `${type}-${value.length}-${value.slice(0, 64)}`
-}
-
-async function fetchWhois(domain: string, apiKey: string | undefined) {
-  if (!apiKey) return { createdDate: 'Inconnue', limited: true }
-
-  const url =
-    `https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=${apiKey}` +
-    `&domainName=${encodeURIComponent(domain)}&outputFormat=JSON`
-
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`Whois HTTP ${res.status}`)
-  const data = await res.json()
-  return {
-    createdDate: data.WhoisRecord?.createdDate ?? 'Inconnue',
-    limited: false,
-  }
 }
 
 const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash']
@@ -76,7 +69,6 @@ async function callGemini(prompt: string, apiKey: string): Promise<Record<string
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text
     if (!text) {
       lastError = `Gemini ${model}: réponse vide`
-      console.error(lastError, JSON.stringify(data).slice(0, 200))
       continue
     }
 
@@ -121,19 +113,17 @@ async function callLLM(prompt: string): Promise<{ raw: Record<string, unknown>; 
 
   if (geminiKey) {
     try {
-      const raw = await callGemini(prompt, geminiKey)
-      return { raw, provider: 'gemini' }
+      return { raw: await callGemini(prompt, geminiKey), provider: 'gemini' }
     } catch (err) {
       console.error('Gemini échec:', err)
     }
   }
 
   if (openaiKey) {
-    const raw = await callOpenAI(prompt, openaiKey)
-    return { raw, provider: 'openai' }
+    return { raw: await callOpenAI(prompt, openaiKey), provider: 'openai' }
   }
 
-  throw new Error('Aucune clé IA disponible (GEMINI_API_KEY ou OPENAI_API_KEY)')
+  throw new Error('Aucune clé IA disponible')
 }
 
 function extractDimensions(raw: Record<string, unknown>) {
@@ -146,7 +136,6 @@ function extractDimensions(raw: Record<string, unknown>) {
   return { dimensions, confidenceScore }
 }
 
-/** Label global dérivé des statuts des 5 dimensions */
 function computeFinalScoreLabel(dimensions: Record<string, unknown>): string {
   const statuses = DIMENSION_KEYS.map((key) => {
     const dim = dimensions[key] as { status?: string } | null
@@ -157,17 +146,161 @@ function computeFinalScoreLabel(dimensions: Record<string, unknown>): string {
   return 'safe'
 }
 
-serve(async (req: Request): Promise<Response> => {
+function buildRichPrompt(
+  type: ContentType,
+  value: string,
+  imageBase64: string | undefined,
+  lang: Lang,
+  ctx: PipelineContext,
+): string {
+  const contentForPrompt =
+    type === 'image'
+      ? `[Image] ${value}${imageBase64 ? ' (base64 fourni)' : ''}`
+      : value
+
+  const techFacts = {
+    ...(ctx.techFacts ?? {}),
+    evidenceFacts: ctx.evidenceFacts,
+    technicalSignals: ctx.technicalSignals,
+  }
+
+  return buildAnalysisPrompt(type, contentForPrompt, techFacts as never, lang)
+}
+
+async function runSynthesisPhase(
+  type: ContentType,
+  value: string,
+  imageBase64: string | undefined,
+  lang: Lang,
+  sessionId: string,
+  ctx: PipelineContext,
+  supabaseClient: ReturnType<typeof createClient>,
+): Promise<{ context: PipelineContext; summary: string; result: Record<string, unknown> }> {
+  let degraded = ctx.degraded ?? false
+  let aiProvider: string | undefined
+  let aiError: string | undefined
+  let aiRaw: Record<string, unknown>
+
+  try {
+    const prompt = buildRichPrompt(type, value, imageBase64, lang, ctx)
+    const llm = await callLLM(prompt)
+    aiRaw = llm.raw
+    aiProvider = llm.provider
+  } catch (err) {
+    aiError = err instanceof Error ? err.message : 'Erreur IA'
+    aiRaw = buildMockEvaluation(true)
+    degraded = true
+  }
+
+  const { dimensions, confidenceScore } = extractDimensions(aiRaw)
+  const finalScoreLabel = computeFinalScoreLabel(dimensions)
+  const techFacts = {
+    ...(ctx.techFacts ?? {}),
+    evidenceFacts: ctx.evidenceFacts,
+    technicalSignals: ctx.technicalSignals,
+    confidenceScore,
+  }
+
+  const contentHash = hashContent(type, value)
+  const { data: contentData, error: contentError } = await supabaseClient
+    .from('contents')
+    .upsert(
+      {
+        url_hash: contentHash,
+        raw_text: value,
+        forensic_metadata: techFacts,
+        content_type: type,
+      },
+      { onConflict: 'url_hash' },
+    )
+    .select()
+    .single()
+
+  if (contentError) console.error('contents insert:', contentError)
+
+  let analysisId = crypto.randomUUID()
+
+  if (contentData) {
+    const { data: analysisData, error: analysisError } = await supabaseClient
+      .from('analyses')
+      .insert({
+        session_id: sessionId,
+        content_id: contentData.id,
+        ai_suggestion: { dimensions, confidenceScore },
+        final_score_label: finalScoreLabel,
+      })
+      .select('id')
+      .single()
+
+    if (analysisError) console.error('analyses insert:', analysisError)
+    if (analysisData?.id) analysisId = analysisData.id
+  }
+
+  const updatedContext: PipelineContext = {
+    ...ctx,
+    degraded,
+    aiProvider,
+    aiError,
+  }
+
+  return {
+    context: updatedContext,
+    summary: degraded
+      ? 'Co-analyse préparée (mode dégradé — IA limitée)'
+      : `Co-analyse prête — 5 dimensions évaluées (${aiProvider})`,
+    result: {
+      analysisId,
+      dimensions,
+      confidenceScore,
+      techFacts,
+      degraded,
+      aiProvider,
+      aiError,
+    },
+  }
+}
+
+async function runPhase(
+  phase: AnalysisPhase,
+  type: ContentType,
+  value: string,
+  imageBase64: string | undefined,
+  lang: Lang,
+  sessionId: string,
+  ctx: PipelineContext,
+  supabaseClient: ReturnType<typeof createClient>,
+) {
+  const whoisKey = Deno.env.get('WHOIS_XML_API_KEY')
+  const apiEnv = {
+    safeBrowsingKey: Deno.env.get('GOOGLE_SAFE_BROWSING_API_KEY'),
+    factCheckKey: Deno.env.get('GOOGLE_FACTCHECK_API_KEY'),
+  }
+
+  switch (phase) {
+    case 'source':
+      return runSourcePhase(type, value, whoisKey)
+    case 'evidence':
+      return runEvidencePhase(type, value, ctx, apiEnv)
+    case 'technical':
+      return runTechnicalPhase(type, value, ctx)
+    case 'synthesis':
+      return runSynthesisPhase(type, value, imageBase64, lang, sessionId, ctx, supabaseClient)
+  }
+}
+
+Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
     const body = (await req.json()) as AnalysisRequest
     const {
+      phase,
       type = 'text',
       value,
       imageBase64,
       lang = 'fr',
       sessionId = crypto.randomUUID(),
+      context = {},
     } = body
 
     if (!value?.trim() && !imageBase64) {
@@ -179,100 +312,61 @@ serve(async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    let degraded = false
-    let techFacts: Record<string, unknown> = { inputType: type, limited: false }
+    // Pipeline complet si phase non spécifiée (compat curl)
+    if (!phase) {
+      let pipelineCtx: PipelineContext = {}
+      let lastSummary = ''
+      let finalResult: Record<string, unknown> | undefined
 
-    if (type === 'url') {
-      const domain = new URL(value).hostname
-      techFacts = {
-        inputType: type,
-        domain,
-        isSecure: value.startsWith('https'),
-        limited: false,
+      for (const p of ANALYSIS_PHASES) {
+        const out = await runPhase(
+          p,
+          type,
+          value,
+          imageBase64,
+          lang,
+          sessionId,
+          pipelineCtx,
+          supabaseClient,
+        )
+        pipelineCtx = out.context
+        lastSummary = out.summary
+        if ('result' in out && out.result) finalResult = out.result
       }
-      try {
-        const whois = await fetchWhois(domain, Deno.env.get('WHOIS_XML_API_KEY'))
-        techFacts.createdDate = whois.createdDate
-        if (whois.limited) {
-          techFacts.limited = true
-          degraded = true
-        }
-      } catch {
-        techFacts.limited = true
-        degraded = true
-      }
+
+      return json({
+        success: true,
+        phase: 'synthesis',
+        phaseIndex: 3,
+        summary: lastSummary,
+        context: pipelineCtx,
+        result: finalResult,
+      })
     }
 
-    const contentForPrompt =
-      type === 'image'
-        ? `[Image] ${value}${imageBase64 ? ' (base64 fourni pour analyse visuelle)' : ''}`
-        : value
-
-    let aiRaw: Record<string, unknown>
-    let aiProvider: string | undefined
-    let aiError: string | undefined
-
-    try {
-      const prompt = buildAnalysisPrompt(type, contentForPrompt, techFacts as never, lang)
-      const llm = await callLLM(prompt)
-      aiRaw = llm.raw
-      aiProvider = llm.provider
-    } catch (err) {
-      aiError = err instanceof Error ? err.message : 'Erreur IA inconnue'
-      console.error('LLM échec:', aiError)
-      aiRaw = buildMockEvaluation(true)
-      degraded = true
+    const phaseIndex = ANALYSIS_PHASES.indexOf(phase)
+    if (phaseIndex === -1) {
+      return json({ success: false, error: `Phase invalide: ${phase}` }, 400)
     }
 
-    const { dimensions, confidenceScore } = extractDimensions(aiRaw)
-    const finalScoreLabel = computeFinalScoreLabel(dimensions)
-
-    const contentHash = hashContent(type, value)
-    const { data: contentData, error: contentError } = await supabaseClient
-      .from('contents')
-      .upsert(
-        {
-          url_hash: contentHash,
-          raw_text: value,
-          forensic_metadata: { ...techFacts, confidenceScore },
-          content_type: type,
-        },
-        { onConflict: 'url_hash' },
-      )
-      .select()
-      .single()
-
-    if (contentError) console.error('contents insert:', contentError)
-
-    let analysisId = crypto.randomUUID()
-
-    if (contentData) {
-      const { data: analysisData, error: analysisError } = await supabaseClient
-        .from('analyses')
-        .insert({
-          session_id: sessionId,
-          content_id: contentData.id,
-          ai_suggestion: { dimensions, confidenceScore },
-          final_score_label: finalScoreLabel,
-        })
-        .select('id')
-        .single()
-
-      if (analysisError) console.error('analyses insert:', analysisError)
-      if (analysisData?.id) analysisId = analysisData.id
-    }
+    const output = await runPhase(
+      phase,
+      type,
+      value,
+      imageBase64,
+      lang,
+      sessionId,
+      context,
+      supabaseClient,
+    )
 
     return json({
       success: true,
-      result: {
-        analysisId,
-        dimensions,
-        confidenceScore,
-        techFacts,
-        degraded,
-        aiProvider,
-        aiError,
-      },
+      phase,
+      phaseIndex,
+      summary: output.summary,
+      context: output.context,
+      result: 'result' in output ? output.result : undefined,
     })
   } catch (error: unknown) {
     console.error(error)

@@ -19,44 +19,62 @@ const LANG_INSTRUCTION: Record<Lang, string> = {
 export function buildAnalysisPrompt(
   inputType: ContentType,
   content: string,
-  techFacts: TechFacts,
+  collectedFacts: Record<string, unknown>,
   lang: Lang,
 ): string {
-  return `Tu es Media Compass, un assistant d'éducation aux médias pour la jeunesse en RDC.
-Évalue le contenu selon le cadre Transmission Humaine™ en 5 dimensions :
-source, evidence, intent, transmission, impact.
+  const phase1 = collectedFacts.domain || collectedFacts.createdDate
+    ? 'Phase 1 (Source) : domaine, HTTPS, Whois, risque domaine'
+    : null
+  const phase2 = collectedFacts.evidenceFacts
+    ? 'Phase 2 (Evidence) : page HTML, Safe Browsing, fact-checks, PesaCheck'
+    : null
+  const phase3 = collectedFacts.technicalSignals
+    ? 'Phase 3 (Technique) : signaux compilés'
+    : null
 
-${LANG_INSTRUCTION[lang] ?? LANG_INSTRUCTION.fr}
+  const phasesDone = [phase1, phase2, phase3].filter(Boolean).join('\n- ')
+
+  return `Tu es Media Compass, un assistant d'éducation aux médias pour la jeunesse en RDC.
+
+CONTEXTE : Les 4 phases de collecte sont terminées. Tu produis maintenant le RAPPORT DE DIAGNOSTIC
+sur les 5 dimensions Transmission Humaine™. L'humain lira ce rapport pour confirmer ou nuancer chaque avis.
+
+Phases de collecte déjà effectuées :
+- ${phasesDone || 'Collecte limitée — base-toi sur le contenu'}
+
+PREUVES COLLECTÉES (utilise-les dans technicalReasons — ne pas inventer) :
+${JSON.stringify(collectedFacts, null, 2)}
 
 Type d'entrée : ${inputType}
-Contenu à analyser :
+Contenu analysé :
 """
 ${content.slice(0, 4000)}
 """
 
-Faits techniques disponibles :
-${JSON.stringify(techFacts, null, 2)}
+${LANG_INSTRUCTION[lang] ?? LANG_INSTRUCTION.fr}
 
-Réponds UNIQUEMENT avec un JSON valide de cette forme exacte :
+Pour CHAQUE dimension, produis :
+- aiSuggestion : avis court (ex. "Fiable", "Douteux", "Risque élevé")
+- confidence : 0.0 à 1.0
+- status : "safe" | "warning" | "risk"
+- technicalReasons : 2 à 4 raisons TIRÉES des preuves ci-dessus (cite domaine, fact-check, signal technique, etc.)
+
+Mapping dimensions ↔ preuves :
+- source     → domaine, HTTPS, Whois, domainRisk, auteur
+- evidence   → citations, fact-checks, Safe Browsing, reachability page
+- intent     → clickbait, langage sensationnaliste, cohérence titre/contenu
+- transmission → valeurs normalisées, cadre "nous vs eux", appel au partage
+- impact     → effet sur cohésion sociale, polarisation, contexte RDC
+
+Réponds UNIQUEMENT en JSON valide :
 {
-  "source": {
-    "aiSuggestion": "string court",
-    "confidence": 0.0,
-    "status": "safe" | "warning" | "risk",
-    "technicalReasons": ["raison 1", "raison 2"]
-  },
+  "source": { "aiSuggestion": "...", "confidence": 0.0, "status": "safe|warning|risk", "technicalReasons": ["...", "..."] },
   "evidence": { ... },
   "intent": { ... },
   "transmission": { ... },
   "impact": { ... },
   "confidenceScore": 0.0
-}
-
-Règles :
-- Chaque dimension doit avoir au moins 2 technicalReasons basées sur les faits.
-- status safe = fiable, warning = douteux, risk = dangereux.
-- confidence entre 0 et 1.
-- confidenceScore = moyenne des confidences des 5 dimensions.`
+}`
 }
 
 export function buildMockEvaluation(degraded: boolean) {

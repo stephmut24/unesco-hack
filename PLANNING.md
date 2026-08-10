@@ -2,7 +2,7 @@
 
 **Projet :** Media Compass (UNESCO Hackathon 2026)  
 **Objectif :** Planifier le développement en séparant clairement la **UI** et la **Logique**.  
-**Dernière mise à jour :** 10 août 2026
+**Dernière mise à jour :** 10 août 2026 (flux diagnostic 4 phases + rapport IA 5 dimensions documenté)
 
 ---
 
@@ -14,6 +14,8 @@
 | **Dev Logique** | Backend, API, DB, état applicatif, types, persistance, prompts IA | `supabase/`, `frontend/src/api/`, `lib/`, `types.ts`, logique dans `App.tsx` |
 
 **Règle :** le dev Logique livre des **données et un flux fonctionnel** ; le dev UI les **affiche** via des props/types stables.
+
+> **Dev UI — commencer ici :** [Guide du diagnostic — pour le dev UI](#guide-du-diagnostic--pour-le-dev-ui) (flux complet, props par écran, checklist priorités).
 
 ---
 
@@ -34,10 +36,23 @@ export type AnalysisInput = {
 // ── Output analyse ─────────────────────────────────
 export type AnalysisResult = {
   analysisId: string
-  dimensions: DimensionEval[]  // 5 dimensions
-  confidenceScore: number      // 0–1 global
+  dimensions: RawAiEvaluation   // 5 dimensions (backend)
+  confidenceScore: number       // 0–1 global
   techFacts: TechFacts
-  degraded?: boolean           // true si APIs indisponibles
+  degraded?: boolean            // true si APIs / IA indisponibles
+  aiProvider?: string           // "gemini" | "openai"
+  aiError?: string              // détail si mode dégradé
+}
+
+// ── Affichage d'une dimension (labels UI + données backend) ──
+export type DimensionEval = {
+  key: DimensionKey             // source | evidence | intent | transmission | impact
+  title: string                 // i18n — ex. "SOURCE"
+  question: string              // i18n — ex. "C'est qui le chef ?"
+  aiSuggestion: string          // avis IA — ex. "Douteux"
+  confidence: number            // 0–1 — ex. 0.85
+  status: 'safe' | 'warning' | 'risk'
+  technicalReasons: string[]    // preuves citées (XAI) — bouton "Pourquoi ?"
 }
 
 // ── Sauvegarde co-analyse ──────────────────────────
@@ -58,15 +73,260 @@ export type Verdict = {
 }
 ```
 
-### Props attendues par écran (UI ← Logique)
+### Props attendues par écran (UI ← Logique) — état actuel
 
-| Écran | Props fournies par la logique |
-|-------|-------------------------------|
-| `EntryScreen` | `error`, `isLoading` |
-| `AnalysisScreen` | `steps` (optionnel : étapes réelles du backend) |
-| `CoAnalysisScreen` | `dimensions: DimensionEval[]` (plus de mocks) |
-| `ReflectionScreen` | — (state local suffit) |
-| `VerdictScreen` | `verdict: Verdict`, `degraded?` |
+| Écran | Props fournies par la logique | Statut branchement |
+|-------|-------------------------------|-------------------|
+| `EntryScreen` | `error?: string \| null` | ✅ Branché |
+| `AnalysisScreen` | `completedPhases: number` (0–4), `phaseSummaries?: string[]` | ✅ Branché |
+| `CoAnalysisScreen` | `dimensions: DimensionEval[]`, `degraded?: boolean` | ✅ Branché |
+| `ReflectionScreen` | `value`, `onChange`, `onContinue` (state App) | ✅ Branché |
+| `VerdictScreen` | `verdict?: Verdict`, `degraded?: boolean`, `choices`, `reflection` | 🔄 Partiel |
+
+---
+
+# Guide du diagnostic — pour le dev UI
+
+> **Lecture obligatoire** avant de continuer les écrans Co-Analyse, Reflection et Verdict.
+
+## Philosophie : collecte → rapport IA → validation humaine
+
+Media Compass ne donne **pas** un verdict binaire (vrai/faux). Le parcours suit le cadre **Transmission Humaine™** :
+
+```
+INPUT
+  ↓
+ÉTAPES 1–4 : COLLECTE DE PREUVES (automatisée, pas de jugement IA)
+  ↓
+ÉTAPE 4 (synthesis) : RAPPORT IA sur 5 DIMENSIONS (basé sur les preuves)
+  ↓
+CO-ANALYSE : l'humain confirme ou nuance chaque dimension
+  ↓
+RÉFLEXION : test du millier (impact social)
+  ↓
+VERDICT : synthèse + actions responsables
+```
+
+**Règle clé :** les 4 premières étapes **collectent** ; l'IA **propose** ; l'humain **dispose**.
+
+---
+
+## Les 4 phases de collecte (`AnalysisScreen`)
+
+Synchronisées avec le backend — **plus de timer fictif**. Chaque étape passe au vert quand la phase backend est terminée.
+
+| # | Libellé UI (`ANALYSIS_STEPS`) | Phase backend | Ce qui est vérifié |
+|---|-------------------------------|---------------|-------------------|
+| 1 | Observer la source et le domaine | `source` | Whois, HTTPS, âge domaine, risque domaine |
+| 2 | Chercher des preuves disponibles | `evidence` | Fetch page, HTML, Safe Browsing, fact-checks, PesaCheck |
+| 3 | Repérer les indices techniques | `technical` | Compilation signaux `[Source]` + `[Evidence]` |
+| 4 | Préparer la co-analyse guidée | `synthesis` | Appel IA + sauvegarde DB → produit le rapport 5D |
+
+### Props `AnalysisScreen` (déjà branchées)
+
+```typescript
+type Props = {
+  lang: Lang
+  completedPhases: number      // 0 → 4 : nb de phases terminées
+  phaseSummaries?: string[]    // résumé backend sous chaque étape validée
+}
+```
+
+### Ce que le dev UI peut améliorer (U-004)
+
+- [ ] Icône ✓ / spinner par étape selon `done` / `active` / `pending`
+- [ ] Afficher `phaseSummaries[i]` sous chaque étape terminée (déjà supporté en prop)
+- [ ] État visuel distinct si `degraded` (bannière amber en fin de collecte)
+- [ ] Transition fluide vers Co-Analyse quand `completedPhases === 4`
+
+**Fichier :** `frontend/src/screens/AnalysisScreen.tsx`
+
+---
+
+## Le rapport IA : 5 dimensions (`CoAnalysisScreen`)
+
+Après la collecte, l'IA produit un **rapport diagnostic** — une carte par dimension.  
+L'humain lit, **confirme** ou **nuance** avant de continuer.
+
+### Structure d'une carte (`DimensionEval`)
+
+```typescript
+{
+  key: 'source',                    // identifiant stable
+  title: 'SOURCE',                  // label i18n (statique — getDimensionLabels)
+  question: "C'est qui le chef ?",  // question i18n (statique)
+  aiSuggestion: 'Douteux',          // ← AVIS IA (dynamique, backend)
+  confidence: 0.87,                 // ← confiance IA 0–1
+  status: 'warning',                // safe | warning | risk → couleur carte
+  technicalReasons: [                // ← preuves (bouton "Pourquoi ?")
+    'Domaine créé il y a 12 jours',
+    'Pas de mentions légales détectées',
+    'Langage sensationnaliste : CHOC'
+  ]
+}
+```
+
+### Mapping dimension ↔ preuves collectées
+
+| Dimension | Question affichée | Basé sur quelles preuves (phases 1–3) |
+|-----------|-------------------|---------------------------------------|
+| **SOURCE** | C'est qui le chef ? | Domaine, HTTPS, Whois, auteur HTML, risque domaine |
+| **EVIDENCE** | Y a-t-il des preuves solides ? | Citations, fact-checks Google, Safe Browsing, page accessible |
+| **INTENT** | Que cherche ce contenu ? | Clickbait, mots alarmistes, cohérence titre/contenu |
+| **TRANSMISSION** | Que normalise ce partage ? | Valeurs véhiculées, cadre « nous vs eux », appel au partage |
+| **IMPACT** | Quel effet sur la société ? | Polarisation, rumeur, contexte RDC |
+
+### Couleurs sémantiques par `status`
+
+| status | Couleur spec | Signification |
+|--------|--------------|---------------|
+| `safe` | Vert (`#10B981`) | Contenu fiable |
+| `warning` | Jaune (`#F59E0B`) | Prudence |
+| `risk` | Rouge (`#EF4444`) | Risque élevé |
+
+### Props `CoAnalysisScreen` (déjà branchées)
+
+```typescript
+type Props = {
+  lang: Lang
+  onLangChange: (lang: Lang) => void
+  dimensions: DimensionEval[]     // 5 cartes — données backend (plus de mocks)
+  degraded?: boolean              // true → afficher bannière amber
+  choices: Record<DimensionKey, UserChoice>
+  onChoice: (key, choice) => void
+  onContinue: () => void
+}
+```
+
+### Ce que le dev UI doit faire (U-005) — **priorité P0**
+
+- [x] 5 cartes `AnalysisCard` avec avis IA + badge confiance
+- [x] Bouton « Pourquoi ? » → accordion `technicalReasons`
+- [x] Boutons [Je confirme] / [Je modifie]
+- [x] Progression X/5 répondu
+- [ ] **Saisie avis personnel** quand l'utilisateur clique « Je modifie » :
+  - Afficher un `<textarea>` ou champ inline sous la carte
+  - Stocker dans `choices` → remonter via `onChoice` + callback `onUserOpinion(key, text)`
+  - *(La logique devra étendre `UserChoice` → `userOpinion` dans `App.tsx`)*
+- [ ] Couleur carte selon `dimension.status` (safe/warning/risk)
+- [ ] Bulle avis IA jaune (spec § U-005) — vérifier contraste
+- [ ] `aria-labels` : lire suggestion + confiance + statut pour lecteurs d'écran
+- [ ] État vide : message si `dimensions.length === 0` (déjà en place, styliser)
+
+**Fichiers :**
+- `frontend/src/screens/CoAnalysisScreen.tsx`
+- `frontend/src/components/AnalysisCard.tsx`
+
+---
+
+## Réflexion — test du millier (`ReflectionScreen`)
+
+> *« Si 10 000 jeunes en RDC partagent ce contenu maintenant, qu'apprend la société ? »*
+
+| Exigence spec | Détail UI |
+|---------------|-----------|
+| Fond bleu nuit, texte blanc | Solennité — marque la profondeur éducative |
+| Textarea obligatoire | Bloquer « Continuer » si vide |
+| Compteur caractères | Min. 10 caractères recommandé |
+| Copy i18n | FR / EN / LN / SW dans `content.ts` |
+
+**Fichiers :** `ReflectionScreen.tsx`, `ResponseInput.tsx`
+
+---
+
+## Verdict final (`VerdictScreen`)
+
+Synthèse **IA + choix humain + réflexion**.
+
+### Props (partiellement branchées)
+
+```typescript
+type Props = {
+  lang: Lang
+  choices: Record<DimensionKey, UserChoice>
+  reflection: string
+  verdict?: Verdict          // { score, label, recommendation } — calculé par logique
+  degraded?: boolean
+  onRestart: () => void
+}
+
+type Verdict = {
+  score: number              // 0–100 — jauge ProgressCompass
+  label: string              // "Prudence recommandée" | "Contenu sain" | "Risque élevé"
+  recommendation: string     // action suggérée
+}
+```
+
+### Ce que le dev UI doit faire (U-007) — **priorité P1**
+
+- [x] Jauge `ProgressCompass` avec `verdict.score`
+- [x] Label verdict (`verdict.label`)
+- [x] Affichage réflexion utilisateur
+- [x] Compteurs confirm / modify
+- [x] Bannière si `degraded === true`
+- [ ] **Bouton « Vérifier sur PesaCheck »** — lien externe (URL dans `analysisResult.techFacts` ou constante)
+- [ ] **Bouton « Supprimer le contenu »** (rouge, spec écran 5)
+- [ ] **Bouton « Partager ma réflexion »** — `navigator.share` (déjà partiellement implémenté)
+- [ ] Afficher `verdict.recommendation` de façon visible (texte sous la jauge)
+- [ ] Résumé visuel des 5 dimensions (mini badges safe/warning/risk) — optionnel mais impactant pour le jury
+
+**Fichiers :** `VerdictScreen.tsx`, `ProgressCompass.tsx`
+
+---
+
+## Parcours complet — wireframe logique
+
+```
+┌─────────────┐
+│  LANDING    │  Accueil, doctrine EDECC™
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│   ENTRY     │  URL / texte / image + error prop
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│  ANALYSIS   │  4 phases collecte (completedPhases 0→4)
+│  (collecte) │  phaseSummaries[] sous chaque étape
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│ CO-ANALYSE  │  5 cartes DimensionEval (rapport IA)
+│ (rapport IA)│  Confirmer / Modifier × 5
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│ REFLECTION  │  Test du millier (obligatoire)
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│  VERDICT    │  verdict: Verdict + actions responsables
+└─────────────┘
+```
+
+---
+
+## Checklist dev UI — prochaines priorités
+
+| Priorité | Tâche | Fichier |
+|----------|-------|---------|
+| **P0** | Saisie avis si « Je modifie » | `AnalysisCard.tsx` |
+| **P0** | Couleurs cartes selon `status` | `AnalysisCard.tsx` |
+| **P1** | Lien PesaCheck au verdict | `VerdictScreen.tsx` |
+| **P1** | Bouton « Supprimer le contenu » | `VerdictScreen.tsx` |
+| **P1** | Fond bleu nuit ReflectionScreen | `ReflectionScreen.tsx` |
+| **P1** | Copy degraded / offline / erreurs i18n | `content.ts` |
+| **P2** | Mini résumé 5D au verdict | `VerdictScreen.tsx` |
+| **P2** | a11y cartes IA | `AnalysisCard.tsx` |
+
+---
+
+## Ce que le dev UI ne doit PAS toucher
+
+- `frontend/src/api/` — appels backend
+- `frontend/src/lib/` — mapping, verdict, validation
+- `supabase/` — Edge Functions, phases, prompt
+- Logique orchestration dans `App.tsx` (sauf props si accord avec dev logique)
 
 ---
 
@@ -363,28 +623,36 @@ SUPABASE_SERVICE_ROLE_KEY
 
 ---
 
-## U-004 · Écran Analysis (animation IA)
-**Priorité : P0** · **Statut : 🔄**
+## U-004 · Écran Analysis (animation collecte)
+**Priorité : P0** · **Statut : 🔄 (branché, polish restant)**
 
+> Voir **Guide du diagnostic → Les 4 phases de collecte**
+
+- [x] Étapes synchronisées avec backend (`completedPhases`, pas de timer fictif)
+- [x] Ne plus rappeler l'API depuis l'écran
 - [ ] Barre de progression + skeleton
-- [ ] Étapes animées (« Analyse du domaine… », etc.)
-- [ ] **🔗 Ne plus rappeler l'API** — écouter signal logique uniquement
-- [ ] Animation minimum pendant attente backend
+- [ ] Afficher `phaseSummaries[i]` sous chaque étape validée (prop déjà fournie)
+- [ ] Icône ✓ / spinner par étape
+- [ ] Bannière si mode dégradé en fin de collecte
 
 **Fichiers :** `frontend/src/screens/AnalysisScreen.tsx`
 
 ---
 
 ## U-005 · Écran Co-Analyse (cœur responsable)
-**Priorité : P0** · **Statut : 🔄 (UI ok, données mock)**
+**Priorité : P0** · **Statut : 🔄 (données réelles branchées, saisie avis manquante)**
 
-- [ ] 5 cartes dimension (`AnalysisCard`)
-- [ ] Bulle avis IA (jaune) + bouton « Pourquoi ? » (accordion)
-- [ ] Boutons [Je confirme] / [Je modifie]
-- [ ] **🔗 Recevoir `dimensions: DimensionEval[]`** (plus de `getMockDimensions`)
-- [ ] **🔗 UI saisie avis personnel** si « Je modifie » (champ texte)
-- [ ] Badge confiance IA par dimension
-- [ ] Progression (X/5 répondu)
+> Voir **Guide du diagnostic → Le rapport IA : 5 dimensions**
+
+- [x] 5 cartes dimension (`AnalysisCard`)
+- [x] Bulle avis IA + bouton « Pourquoi ? » (accordion `technicalReasons`)
+- [x] Boutons [Je confirme] / [Je modifie]
+- [x] Recevoir `dimensions: DimensionEval[]` (plus de mocks)
+- [x] Badge confiance IA par dimension
+- [x] Progression (X/5 répondu)
+- [ ] **UI saisie avis personnel** si « Je modifie » (champ texte → `userOpinion`)
+- [ ] Couleur carte selon `dimension.status` (safe/warning/risk)
+- [ ] Bannière `degraded` si IA limitée
 
 **Fichiers :**
 - `frontend/src/screens/CoAnalysisScreen.tsx`
@@ -405,18 +673,22 @@ SUPABASE_SERVICE_ROLE_KEY
 ---
 
 ## U-007 · Écran Verdict
-**Priorité : P1** · **Statut : 🔄**
+**Priorité : P1** · **Statut : 🔄 (verdict branché, actions responsables incomplètes)**
 
-- [ ] Jauge colorée (`ProgressCompass`) vert → rouge
-- [ ] **🔗 Recevoir `verdict: Verdict`** (score + label calculés par logique)
-- [ ] Synthèse réflexion utilisateur
-- [ ] Compteurs confirm/modify
+> Voir **Guide du diagnostic → Verdict final**
+
+- [x] Jauge colorée (`ProgressCompass`) vert → rouge
+- [x] Recevoir `verdict: Verdict` (score + label calculés par logique)
+- [x] Synthèse réflexion utilisateur
+- [x] Compteurs confirm/modify
+- [x] Afficher bannière si `degraded === true`
+- [ ] Afficher `verdict.recommendation` sous la jauge
 - [ ] Actions responsables :
   - [ ] Bouton « Supprimer le contenu » (rouge)
-  - [ ] Lien « Vérifier sur PesaCheck »
+  - [ ] Lien « Vérifier sur PesaCheck » (URL externe)
   - [ ] Bouton « Partager ma réflexion »
-- [ ] Bouton « Nouvelle analyse »
-- [ ] **🔗 Afficher bannière si `degraded === true`**
+- [ ] Mini résumé visuel des 5 dimensions (optionnel, impact jury)
+- [x] Bouton « Nouvelle analyse »
 
 **Fichiers :** `frontend/src/screens/VerdictScreen.tsx`, `components/ProgressCompass.tsx`
 
