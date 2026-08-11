@@ -78,6 +78,9 @@ export function VerdictScreen({
         ) : null}
 
         <ProgressCompass score={score} label={copy.riskConfidenceLabel} />
+        {verdict?.recommendation ? (
+          <p className="text-sm leading-relaxed text-muted">{verdict.recommendation}</p>
+        ) : null}
 
         {verdict?.recommendation ? (
           <div className="lesson-card border-l-4 border-accent px-4 py-3.5">
