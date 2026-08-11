@@ -5,9 +5,9 @@ import type { Lang } from '../types'
 
 type Props = {
   lang: Lang
-  /** Nombre de phases termin├®es (0ÔÇô4) */
+  /** Nombre de phases terminées (0–4) */
   completedPhases: number
-  /** R├®sum├® backend par ├®tape termin├®e */
+  /** Résumé backend par étape terminée */
   phaseSummaries?: string[]
   degraded?: boolean
 }
@@ -29,7 +29,7 @@ export function AnalysisScreen({
       lang={lang}
       step="analysis"
       showLang={false}
-      lessonEyebrow={`02 ┬À ${copy.analysisRunningTitle}`}
+      lessonEyebrow={`02 · ${copy.analysisRunningTitle}`}
       title={copy.analysisRunningHint}
       learnGoal={copy.learnGoals[1]}
     >
@@ -77,7 +77,7 @@ export function AnalysisScreen({
                 >
                   <span className="flex w-7 shrink-0 items-start justify-center pt-0.5">
                     {state === 'done' ? (
-                      <Check size={18} aria-label="Termin├®" />
+                      <Check size={18} aria-label="Terminé" />
                     ) : state === 'active' ? (
                       <Loader2
                         size={18}

@@ -35,7 +35,7 @@ export function CoAnalysisScreen({
       lang={lang}
       step="coanalysis"
       onLangChange={onLangChange}
-      lessonEyebrow={`03 ┬À ${copy.coAnalysisTitle}`}
+      lessonEyebrow={`03 · ${copy.coAnalysisTitle}`}
       title={copy.coAnalysisHint(answeredCount, dimensions.length)}
       learnGoal={copy.learnGoals[2]}
       footer={
@@ -82,7 +82,7 @@ export function CoAnalysisScreen({
               modifyOpinionLabel={copy.modifyOpinionLabel}
               modifyOpinionPlaceholder={copy.modifyOpinionPlaceholder}
               autoSuggestionLabel={copy.autoSuggestionLabel}
-              autoSuggestionText={copy.autoSuggestionText}
+              nuanceHint={copy.nuanceHint}
               confidenceLabel={copy.confidence(dimension.confidence)}
               onChoice={(choice) => onChoice(dimension.key, choice)}
               onUserOpinion={(text) => onUserOpinion(dimension.key, text)}

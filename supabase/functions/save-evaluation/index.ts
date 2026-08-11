@@ -1,4 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+import {
+  computeVerdictScore,
+  generateVerdictRecommendation,
+  type Verdict,
+} from './verdict.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,17 +15,21 @@ type UserChoiceDetail = {
   userOpinion?: string
 }
 
+type Lang = 'fr' | 'en' | 'ln' | 'sw'
+
 type SaveEvaluationRequest = {
   analysisId: string
   choices: Record<string, UserChoiceDetail>
   reflection: string
+  lang?: Lang
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { analysisId, choices, reflection } = (await req.json()) as SaveEvaluationRequest
+    const { analysisId, choices, reflection, lang = 'fr' } =
+      (await req.json()) as SaveEvaluationRequest
 
     if (!analysisId || !reflection?.trim()) {
       return json({ success: false, error: 'analysisId et reflection requis' }, 400)
@@ -31,9 +40,38 @@ Deno.serve(async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
+    const { data: analysis, error: fetchError } = await supabaseClient
+      .from('analyses')
+      .select('ai_suggestion')
+      .eq('id', analysisId)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    const aiSuggestion = analysis?.ai_suggestion ?? {}
+    const baseVerdict = computeVerdictScore(aiSuggestion, choices, lang)
+    const recommendation = await generateVerdictRecommendation(
+      aiSuggestion,
+      choices,
+      reflection,
+      lang,
+      baseVerdict,
+    )
+
+    const verdict: Verdict = {
+      score: baseVerdict.score,
+      label: baseVerdict.label,
+      recommendation,
+      level: baseVerdict.level,
+    }
+
     const { error: updateError } = await supabaseClient
       .from('analyses')
-      .update({ user_validation: choices })
+      .update({
+        user_validation: choices,
+        final_score_label: verdict.level,
+        completed_at: new Date().toISOString(),
+      })
       .eq('id', analysisId)
 
     if (updateError) throw updateError
@@ -58,7 +96,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (reflectionError) throw reflectionError
 
-    return json({ success: true })
+    return json({
+      success: true,
+      verdict: {
+        score: verdict.score,
+        label: verdict.label,
+        recommendation: verdict.recommendation,
+      },
+    })
   } catch (error: unknown) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Erreur interne'

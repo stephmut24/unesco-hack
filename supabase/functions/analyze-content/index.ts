@@ -40,10 +40,15 @@ function hashContent(type: ContentType, value: string): string {
   return `${type}-${value.length}-${value.slice(0, 64)}`
 }
 
-const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash']
+// Modèles pour comptes Google AI Studio récents (2.x indisponibles pour nouveaux utilisateurs)
+const GEMINI_MODELS = [
+  'gemini-3-flash-preview',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+]
 
 async function callGemini(prompt: string, apiKey: string): Promise<Record<string, unknown>> {
-  let lastError = 'Gemini indisponible'
+  const attempts: string[] = []
 
   for (const model of GEMINI_MODELS) {
     const geminiUrl =
@@ -61,69 +66,38 @@ async function callGemini(prompt: string, apiKey: string): Promise<Record<string
     const data = await response.json()
 
     if (!response.ok) {
-      lastError = `Gemini ${model} HTTP ${response.status}: ${JSON.stringify(data).slice(0, 200)}`
-      console.error(lastError)
+      const err = `Gemini ${model} HTTP ${response.status}: ${JSON.stringify(data).slice(0, 120)}`
+      console.error(err)
+      attempts.push(err)
       continue
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text
     if (!text) {
-      lastError = `Gemini ${model}: réponse vide`
+      attempts.push(`Gemini ${model}: réponse vide`)
       continue
     }
 
     return JSON.parse(text)
   }
 
-  throw new Error(lastError)
-}
-
-async function callOpenAI(prompt: string, apiKey: string): Promise<Record<string, unknown>> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: 'Tu réponds uniquement en JSON valide, sans markdown.' },
-        { role: 'user', content: prompt },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-    }),
-  })
-
-  const data = await response.json()
-  if (!response.ok) {
-    throw new Error(`OpenAI HTTP ${response.status}: ${JSON.stringify(data).slice(0, 200)}`)
-  }
-
-  const text = data.choices?.[0]?.message?.content
-  if (!text) throw new Error('OpenAI: réponse vide')
-
-  return JSON.parse(text)
+  throw new Error(attempts.join(' | '))
 }
 
 async function callLLM(prompt: string): Promise<{ raw: Record<string, unknown>; provider: string }> {
   const geminiKey = Deno.env.get('GEMINI_API_KEY')
-  const openaiKey = Deno.env.get('OPENAI_API_KEY')
 
-  if (geminiKey) {
-    try {
-      return { raw: await callGemini(prompt, geminiKey), provider: 'gemini' }
-    } catch (err) {
-      console.error('Gemini échec:', err)
-    }
+  if (!geminiKey) {
+    throw new Error('Gemini: GEMINI_API_KEY absente')
   }
 
-  if (openaiKey) {
-    return { raw: await callOpenAI(prompt, openaiKey), provider: 'openai' }
+  try {
+    return { raw: await callGemini(prompt, geminiKey), provider: 'gemini' }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Erreur Gemini'
+    console.error('Gemini échec:', msg)
+    throw new Error(`Gemini: ${msg}`)
   }
-
-  throw new Error('Aucune clé IA disponible')
 }
 
 function extractDimensions(raw: Record<string, unknown>) {
@@ -176,7 +150,8 @@ async function runSynthesisPhase(
   ctx: PipelineContext,
   supabaseClient: ReturnType<typeof createClient>,
 ): Promise<{ context: PipelineContext; summary: string; result: Record<string, unknown> }> {
-  let degraded = ctx.degraded ?? false
+  const forensicLimited = ctx.degraded ?? false
+  let aiDegraded = false
   let aiProvider: string | undefined
   let aiError: string | undefined
   let aiRaw: Record<string, unknown>
@@ -189,8 +164,11 @@ async function runSynthesisPhase(
   } catch (err) {
     aiError = err instanceof Error ? err.message : 'Erreur IA'
     aiRaw = buildMockEvaluation(true)
-    degraded = true
+    aiDegraded = true
   }
+
+  // Bannière UI : uniquement si l'IA a échoué (pas si seule la collecte forensique est partielle)
+  const degraded = aiDegraded
 
   const { dimensions, confidenceScore } = extractDimensions(aiRaw)
   const finalScoreLabel = computeFinalScoreLabel(dimensions)
@@ -239,15 +217,18 @@ async function runSynthesisPhase(
   const updatedContext: PipelineContext = {
     ...ctx,
     degraded,
+    forensicLimited,
     aiProvider,
     aiError,
   }
 
   return {
     context: updatedContext,
-    summary: degraded
+    summary: aiDegraded
       ? 'Co-analyse préparée (mode dégradé — IA limitée)'
-      : `Co-analyse prête — 5 dimensions évaluées (${aiProvider})`,
+      : forensicLimited
+        ? `Co-analyse prête — 5 dimensions (${aiProvider}, collecte partielle)`
+        : `Co-analyse prête — 5 dimensions évaluées (${aiProvider})`,
     result: {
       analysisId,
       dimensions,

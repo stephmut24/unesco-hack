@@ -14,7 +14,7 @@ type Props = {
   modifyOpinionLabel: string
   modifyOpinionPlaceholder: string
   autoSuggestionLabel: string
-  autoSuggestionText: (suggestion: string) => string
+  nuanceHint: string
   confidenceLabel: string
   onChoice: (choice: Exclude<UserChoice, null>) => void
   onUserOpinion: (text: string) => void
@@ -45,7 +45,7 @@ export function AnalysisCard({
   modifyOpinionLabel,
   modifyOpinionPlaceholder,
   autoSuggestionLabel,
-  autoSuggestionText,
+  nuanceHint,
   confidenceLabel,
   onChoice,
   onUserOpinion,
@@ -54,18 +54,17 @@ export function AnalysisCard({
   const [open, setOpen] = useState(false)
   const panelId = useId()
   const opinionId = useId()
-  const suggestionText = autoSuggestionText(dimension.aiSuggestion)
 
   return (
     <article
       className={`lesson-card fade-in p-5 sm:p-6 ${statusCard[dimension.status]}`}
       style={{ animationDelay: `${index * 35}ms` }}
-      aria-label={`${dimension.title}. ${dimension.question}. ${autoSuggestionLabel}: ${dimension.aiSuggestion}. ${confidenceLabel}. Statut: ${dimension.status}`}
+      aria-label={`${dimension.title}. ${dimension.question}. ${dimension.aiSummary}. ${confidenceLabel}`}
     >
       <header className="flex items-start justify-between gap-3">
         <div>
           <p className="font-display text-[0.68rem] font-bold tracking-[0.12em] text-accent">
-            Le├ºon {String(index + 1).padStart(2, '0')} ┬À {dimension.title}
+            Leçon {String(index + 1).padStart(2, '0')} · {dimension.title}
           </p>
           <h3 className="mt-2 font-display text-[1.1rem] font-bold leading-snug text-ink">
             {dimension.question}
@@ -73,24 +72,33 @@ export function AnalysisCard({
         </div>
         <span
           className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold ${statusBadge[dimension.status]}`}
+          title={confidenceLabel}
         >
           {Math.round(dimension.confidence * 100)}%
         </span>
       </header>
 
-      {/* Bulle avis IA ÔÇö jaune (spec) */}
       <section className="mt-4 rounded-xl bg-amber-50 px-4 py-3.5 text-ink">
-        <p className="font-display text-[0.68rem] font-bold uppercase tracking-wider text-warn">
-          {autoSuggestionLabel}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-display text-[0.68rem] font-bold uppercase tracking-wider text-warn">
+            {autoSuggestionLabel}
+          </p>
+          <span
+            className={`rounded-md px-2 py-0.5 text-xs font-semibold ${statusBadge[dimension.status]}`}
+          >
+            {dimension.aiSuggestion}
+          </span>
+        </div>
         <p
-          className="mt-1.5 text-sm leading-relaxed"
+          className="mt-2 text-sm leading-relaxed"
           role="status"
-          aria-label={`${autoSuggestionLabel}: ${dimension.aiSuggestion}. ${confidenceLabel}. ${dimension.status}`}
+          aria-label={`${autoSuggestionLabel}. ${dimension.aiSummary}`}
         >
-          {suggestionText}
+          {dimension.aiSummary}
         </p>
-        <p className="mt-1.5 text-xs text-muted">{confidenceLabel}</p>
+        <p className="mt-2 text-xs text-muted">
+          {confidenceLabel} · {nuanceHint}
+        </p>
       </section>
 
       <button

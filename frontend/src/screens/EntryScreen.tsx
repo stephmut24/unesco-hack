@@ -43,7 +43,7 @@ export function EntryScreen({
       lang={lang}
       step="entry"
       onLangChange={onLangChange}
-      lessonEyebrow={`01 ┬À ${copy.depositTitle}`}
+      lessonEyebrow={`01 · ${copy.depositTitle}`}
       title={copy.tagline}
     >
       <motion.div

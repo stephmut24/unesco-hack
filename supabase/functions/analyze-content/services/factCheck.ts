@@ -39,8 +39,3 @@ export async function searchFactChecks(
     return { claims: [], limited: true }
   }
 }
-
-/** Lien de recherche PesaCheck (pas d'API publique — renvoie URL pour vérification manuelle) */
-export function pesacheckSearchUrl(query: string): string {
-  return `https://pesacheck.org/?s=${encodeURIComponent(query.slice(0, 100))}`
-}

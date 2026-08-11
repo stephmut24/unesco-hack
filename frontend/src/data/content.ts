@@ -5,7 +5,7 @@ const DIMENSION_LABELS_FR: DimensionLabel[] = [
   { key: 'evidence', title: 'EVIDENCE', question: 'Y a-t-il des preuves solides ?' },
   { key: 'intent', title: 'INTENT', question: 'Que cherche ce contenu ?' },
   { key: 'transmission', title: 'TRANSMISSION', question: 'Que normalise ce partage ?' },
-  { key: 'impact', title: 'IMPACT', question: 'Quel effet sur la soci├®t├® ?' },
+  { key: 'impact', title: 'IMPACT', question: 'Quel effet sur la société ?' },
 ]
 
 const DIMENSION_LABELS_EN: DimensionLabel[] = [
@@ -16,7 +16,7 @@ const DIMENSION_LABELS_EN: DimensionLabel[] = [
   { key: 'impact', title: 'IMPACT', question: 'What effect on society?' },
 ]
 
-/** Labels i18n des 5 dimensions (sans donn├®es IA ÔÇö celles-ci viennent du backend) */
+/** Labels i18n des 5 dimensions (sans données IA — celles-ci viennent du backend) */
 export function getDimensionLabels(lang: Lang): DimensionLabel[] {
   if (lang === 'en') return DIMENSION_LABELS_EN
   return DIMENSION_LABELS_FR
@@ -26,8 +26,8 @@ export const ANALYSIS_STEPS: Record<Lang, readonly string[]> = {
   fr: [
     'Observer la source et le domaine',
     'Chercher des preuves disponibles',
-    'Rep├®rer les indices techniques',
-    'Pr├®parer la co-analyse guid├®e',
+    'Repérer les indices techniques',
+    'Préparer la co-analyse guidée',
   ],
   en: [
     'Observe the source and domain',
@@ -38,8 +38,8 @@ export const ANALYSIS_STEPS: Record<Lang, readonly string[]> = {
   ln: [
     'Observer la source et le domaine',
     'Chercher des preuves disponibles',
-    'Rep├®rer les indices techniques',
-    'Pr├®parer la co-analyse guid├®e',
+    'Repérer les indices techniques',
+    'Préparer la co-analyse guidée',
   ],
   sw: [
     'Observe the source and domain',
@@ -78,7 +78,7 @@ type Copy = {
   modifyOpinionPlaceholder: string
   continue: string
   autoSuggestionLabel: string
-  autoSuggestionText: (suggestion: string) => string
+  nuanceHint: string
   thousandTestLabel: string
   reflectionTitle: string
   reflectionHint: string
@@ -91,7 +91,6 @@ type Copy = {
   choiceCounts: (confirmed: number, modified: number) => string
   deleteContent: string
   shareReflection: string
-  verifyPesacheck: string
   recommendationLabel: string
   dimensionsSummaryLabel: string
   launching: string
@@ -112,76 +111,74 @@ type Copy = {
 export const COPY: Record<Lang, Copy> = {
   fr: {
     brand: 'Media Compass',
-    tagline: 'Apprendre ├á penser avant de partager',
-    landingHeadline: 'Apprendre ├á orienter ton jugement avant de partager',
+    tagline: 'Apprendre à penser avant de partager',
+    landingHeadline: 'Apprendre à orienter ton jugement avant de partager',
     landingLead:
-      'Media Compass tÔÇÖentra├«ne ├á lire un contenu, observer des indices, puis d├®cider ÔÇö sans laisser lÔÇÖoutil penser ├á ta place.',
+      "Media Compass t'entraîne à lire un contenu, observer des indices, puis décider — sans laisser l'outil penser à ta place.",
     landingCta: 'Entrer dans le module',
-    moduleLabel: 'Module de citoyennet├® num├®rique',
-    learnLabel: 'Objectif dÔÇÖapprentissage',
-    railLabels: ['Collecte', 'Diagnostic', '├ëvaluation', 'R├®flexion', 'Synth├¿se'],
+    moduleLabel: 'Module de citoyenneté numérique',
+    learnLabel: "Objectif d'apprentissage",
+    railLabels: ['Collecte', 'Diagnostic', 'Évaluation', 'Réflexion', 'Synthèse'],
     learnGoals: [
-      'D├®poser un contenu r├®el et comprendre ce quÔÇÖon va examiner.',
-      'Observer avant de juger : rep├®rer indices et m├®thodes de v├®rification.',
-      'Comparer la proposition du syst├¿me ├á ton jugement critique.',
-      'Formuler lÔÇÖimpact social dÔÇÖun partage collectif.',
-      'Retenir un bilan clair et une d├®cision responsable.',
+      "Déposer un contenu réel et comprendre ce qu'on va examiner.",
+      'Observer avant de juger : repérer indices et méthodes de vérification.',
+      'Comparer la proposition du système à ton jugement critique.',
+      "Formuler l'impact social d'un partage collectif.",
+      'Retenir un bilan clair et une décision responsable.',
     ],
-    selectedImageAlt: 'Capture s├®lectionn├®e',
+    selectedImageAlt: 'Capture sélectionnée',
     placeholder:
-      'Colle un lien, un texte ou une capture WhatsApp fournie par ton enseignantÔÇª',
+      'Colle un lien, un texte ou une capture WhatsApp fournie par ton enseignant…',
     launch: 'Commencer le module',
-    footer: 'Cadre p├®dagogique Transmission HumaineÔäó ┬À Media Compass',
-    depositTitle: 'Apporter un contenu ├á ├®tudier',
+    footer: 'Cadre pédagogique Transmission Humaine™ · Media Compass',
+    depositTitle: 'Apporter un contenu à étudier',
     analysisRunningTitle: 'Observer avant de juger',
     analysisRunningHint:
-      'Chaque ├®tape est un objectif dÔÇÖobservation. Prends le temps de suivre la m├®thode.',
+      "Chaque étape est un objectif d'observation. Prends le temps de suivre la méthode.",
     analysisStep: (current, total) => `Objectif ${current} / ${total}`,
     coAnalysisTitle: 'Co-analyser les 5 dimensions',
     coAnalysisHint: (answered, total) =>
-      `Le├ºons valid├®es ┬À ${answered}/${total} ÔÇö le syst├¿me propose, tu d├®cides`,
+      `Leçons validées · ${answered}/${total} — le système propose, tu décides`,
     why: 'Voir les indices',
     evidenceLabel: 'Indices & preuves',
-    yourDecision: 'Ta d├®cision dÔÇÖapprenant',
+    yourDecision: "Ta décision d'apprenant",
     confirm: 'Je confirme la proposition',
     modify: 'Je nuance / je corrige',
     modifyOpinionLabel: 'Ton avis',
-    modifyOpinionPlaceholder: 'Explique en une phrase pourquoi tu nuancesÔÇª',
-    continue: 'Passer ├á la r├®flexion',
-    autoSuggestionLabel: 'Proposition du syst├¿me',
-    autoSuggestionText: (suggestion) =>
-      `Proposition : ${suggestion}. ├Ç toi de valider ou de nuancer.`,
-    thousandTestLabel: 'Carnet de r├®flexion',
+    modifyOpinionPlaceholder: 'Explique en une phrase pourquoi tu nuances…',
+    continue: 'Passer à la réflexion',
+    autoSuggestionLabel: 'Proposition du système',
+    nuanceHint: 'À toi de valider ou de nuancer.',
+    thousandTestLabel: 'Carnet de réflexion',
     reflectionTitle:
-      'Si 10 000 jeunes en RDC partagent ce contenu maintenant, quÔÇÖapprend la soci├®t├® ?',
-    reflectionHint: '├ëcris une phrase claire. CÔÇÖest ton apprentissage, pas une case ├á cocher.',
+      "Si 10 000 jeunes en RDC partagent ce contenu maintenant, qu'apprend la société ?",
+    reflectionHint: "Écris une phrase claire. C'est ton apprentissage, pas une case à cocher.",
     seeVerdict: 'Voir mon bilan',
     verdictTitle: 'Bilan du module',
-    verdictLabel: 'Prudence recommand├®e',
+    verdictLabel: 'Prudence recommandée',
     riskConfidenceLabel: 'Niveau de vigilance acquis',
     reflectionCardTitle: 'Ce que tu retiens',
-    takeawayLabel: 'Synth├¿se de ton parcours',
+    takeawayLabel: 'Synthèse de ton parcours',
     choiceCounts: (confirmed, modified) =>
-      `${confirmed} propositions confirm├®es ┬À ${modified} avis nuanc├®s`,
+      `${confirmed} propositions confirmées · ${modified} avis nuancés`,
     deleteContent: 'Supprimer le contenu',
-    shareReflection: 'Partager ma r├®flexion',
-    verifyPesacheck: 'V├®rifier sur PesaCheck',
+    shareReflection: 'Partager ma réflexion',
     recommendationLabel: 'Recommandation',
     dimensionsSummaryLabel: 'Les 5 dimensions',
-    launching: 'Analyse en coursÔÇª',
-    shareCopied: 'R├®flexion copi├®e',
+    launching: 'Analyse en cours…',
+    shareCopied: 'Réflexion copiée',
     continueWithoutAi: 'Continuer sans IA',
     newModule: 'Nouveau module',
     offline:
-      'Connexion limit├®e : tu peux poursuivre lÔÇÖanalyse manuelle et continuer dÔÇÖapprendre.',
+      "Connexion limitée : tu peux poursuivre l'analyse manuelle et continuer d'apprendre.",
     offlineCompass:
-      'LÔÇÖIA est endormie ├á cause de la connexion, mais ta boussole int├®rieure peut continuer.',
+      "L'IA est endormie à cause de la connexion, mais ta boussole intérieure peut continuer.",
     degradedBanner:
-      'Analyse technique limit├®e ÔÇö certains services ├®taient indisponibles. LÔÇÖIA a travaill├® avec moins de preuves.',
+      "Analyse technique limitée — certains services étaient indisponibles. L'IA a travaillé avec moins de preuves.",
     emptyDimensionsTitle: 'Aucune analyse disponible',
-    emptyDimensionsHint: 'Relance une v├®rification depuis lÔÇÖ├®cran pr├®c├®dent.',
+    emptyDimensionsHint: "Relance une vérification depuis l'écran précédent.",
     addImage: 'Joindre une capture',
-    removeImage: 'Retirer lÔÇÖimage',
+    removeImage: "Retirer l'image",
     confidence: (n) => `Indice de confiance ${Math.round(n * 100)}%`,
     languageLabel: 'Langue',
   },
@@ -190,7 +187,7 @@ export const COPY: Record<Lang, Copy> = {
     tagline: 'Learn to think before you share',
     landingHeadline: 'Learn to orient your judgment before you share',
     landingLead:
-      'Media Compass trains you to read content, observe signals, then decide ÔÇö without letting the tool think for you.',
+      'Media Compass trains you to read content, observe signals, then decide — without letting the tool think for you.',
     landingCta: 'Enter the module',
     moduleLabel: 'Digital citizenship module',
     learnLabel: 'Learning goal',
@@ -204,9 +201,9 @@ export const COPY: Record<Lang, Copy> = {
     ],
     selectedImageAlt: 'Selected screenshot',
     placeholder:
-      'Paste a link, text, or WhatsApp screenshot shared by your teacherÔÇª',
+      'Paste a link, text, or WhatsApp screenshot shared by your teacher…',
     launch: 'Start the module',
-    footer: 'Human TransmissionÔäó learning framework ┬À Media Compass',
+    footer: 'Human Transmission™ learning framework · Media Compass',
     depositTitle: 'Bring content to study',
     analysisRunningTitle: 'Observe before you judge',
     analysisRunningHint:
@@ -214,18 +211,17 @@ export const COPY: Record<Lang, Copy> = {
     analysisStep: (current, total) => `Goal ${current} / ${total}`,
     coAnalysisTitle: 'Co-analyze the 5 dimensions',
     coAnalysisHint: (answered, total) =>
-      `Lessons completed ┬À ${answered}/${total} ÔÇö the system proposes, you decide`,
+      `Lessons completed · ${answered}/${total} — the system proposes, you decide`,
     why: 'See the evidence',
     evidenceLabel: 'Signals & evidence',
     yourDecision: 'Your learner decision',
     confirm: 'I confirm the proposal',
     modify: 'I nuance / correct it',
     modifyOpinionLabel: 'Your view',
-    modifyOpinionPlaceholder: 'Explain in one sentence why you nuanceÔÇª',
+    modifyOpinionPlaceholder: 'Explain in one sentence why you nuance…',
     continue: 'Continue to reflection',
     autoSuggestionLabel: 'System proposal',
-    autoSuggestionText: (suggestion) =>
-      `Proposal: ${suggestion}. Confirm it or add nuance.`,
+    nuanceHint: 'Confirm it or add nuance.',
     thousandTestLabel: 'Reflection journal',
     reflectionTitle:
       'If 10,000 young people in the DRC share this content now, what does society learn?',
@@ -237,13 +233,12 @@ export const COPY: Record<Lang, Copy> = {
     reflectionCardTitle: 'What you take away',
     takeawayLabel: 'Path summary',
     choiceCounts: (confirmed, modified) =>
-      `${confirmed} confirmed ┬À ${modified} nuanced`,
+      `${confirmed} confirmed · ${modified} nuanced`,
     deleteContent: 'Delete this content',
     shareReflection: 'Share my reflection',
-    verifyPesacheck: 'Verify on PesaCheck',
     recommendationLabel: 'Recommendation',
     dimensionsSummaryLabel: 'The 5 dimensions',
-    launching: 'Analysis in progressÔÇª',
+    launching: 'Analysis in progress…',
     shareCopied: 'Reflection copied',
     continueWithoutAi: 'Continue without AI',
     newModule: 'New module',
@@ -252,7 +247,7 @@ export const COPY: Record<Lang, Copy> = {
     offlineCompass:
       'AI is asleep due to the connection, but your inner compass can continue.',
     degradedBanner:
-      'Limited technical analysis ÔÇö some services were unavailable. The AI worked with fewer signals.',
+      'Limited technical analysis — some services were unavailable. The AI worked with fewer signals.',
     emptyDimensionsTitle: 'No analysis available',
     emptyDimensionsHint: 'Start a new check from the previous screen.',
     addImage: 'Attach a screenshot',
@@ -265,79 +260,77 @@ export const COPY: Record<Lang, Copy> = {
     tagline: 'Koyekola kanisa liboso ya kokabola',
     landingHeadline: 'Koyekola kozwa jugement liboso ya kokabola',
     landingLead:
-      'Media Compass epesa nzela ya kot├ínga contenu, kotala ba indices, mpe kozwa d├®cision ÔÇö outil ekosala te na esika na yo.',
+      'Media Compass epesa nzela ya kotánga contenu, kotala ba indices, mpe kozwa décision — outil ekosala te na esika na yo.',
     landingCta: 'Kokota na module',
-    moduleLabel: 'Module ya citoyennet├® num├®rique',
+    moduleLabel: 'Module ya citoyenneté numérique',
     learnLabel: 'Objectif ya koyekola',
-    railLabels: ['Kobunda', 'Diagnostic', '├ëvaluation', 'R├®flexion', 'Synth├¿se'],
+    railLabels: ['Kobunda', 'Diagnostic', 'Évaluation', 'Réflexion', 'Synthèse'],
     learnGoals: [
       'Kotya contenu mpe koyeba oyo tokotala.',
-      'Kotala liboso ya kozwa d├®cision.',
-      'Kokanisa proposition ya syst├¿me na jugement na yo.',
-      'Koloba impact ya soci├®t├®.',
-      'Kobanga bilan clair mpe d├®cision responsable.',
+      'Kotala liboso ya kozwa décision.',
+      'Kokanisa proposition ya système na jugement na yo.',
+      'Koloba impact ya société.',
+      'Kobanga bilan clair mpe décision responsable.',
     ],
     selectedImageAlt: 'Foto oyo oponi',
-    placeholder: 'Tia lien, texte to photo ya WhatsAppÔÇª',
+    placeholder: 'Tia lien, texte to photo ya WhatsApp…',
     launch: 'Bandisa module',
-    footer: 'Cadre Transmission HumaineÔäó ┬À Media Compass',
+    footer: 'Cadre Transmission Humaine™ · Media Compass',
     depositTitle: 'Kotya contenu ya koyekola',
-    analysisRunningTitle: 'Kotala liboso ya kozwa d├®cision',
+    analysisRunningTitle: 'Kotala liboso ya kozwa décision',
     analysisRunningHint: 'Etape nyonso ezali objectif ya observation.',
     analysisStep: (current, total) => `Objectif ${current} / ${total}`,
     coAnalysisTitle: 'Co-analyser ba dimensions 5',
     coAnalysisHint: (answered, total) =>
-      `Le├ºons ┬À ${answered}/${total} ÔÇö syst├¿me epesa, yo ozwa d├®cision`,
+      `Leçons · ${answered}/${total} — système epesa, yo ozwa décision`,
     why: 'Tala ba indices',
     evidenceLabel: 'Indices & preuves',
-    yourDecision: 'D├®cision na yo',
+    yourDecision: 'Décision na yo',
     confirm: 'Nazui proposition',
     modify: 'Nabongoli / nanuance',
     modifyOpinionLabel: 'Opinion na yo',
-    modifyOpinionPlaceholder: 'Lobela mwa sentence mpo nini onuanceÔÇª',
-    continue: 'Kokende na r├®flexion',
-    autoSuggestionLabel: 'Proposition ya syst├¿me',
-    autoSuggestionText: (suggestion) =>
-      `Proposition: ${suggestion}. Confirme to nuance.`,
-    thousandTestLabel: 'Carnet ya r├®flexion',
+    modifyOpinionPlaceholder: 'Lobela mwa sentence mpo nini onuance…',
+    continue: 'Kokende na réflexion',
+    autoSuggestionLabel: 'Proposition ya système',
+    nuanceHint: 'Confirme to nuance.',
+    thousandTestLabel: 'Carnet ya réflexion',
     reflectionTitle:
-      'Soki bilenge 10 000 ya RDC bakabola yango lelo, soci├®t├® ekoyekola nini ?',
+      'Soki bilenge 10 000 ya RDC bakabola yango lelo, société ekoyekola nini ?',
     reflectionHint: 'Lokasa moko ya solo. Yango ezali boyekoli.',
     seeVerdict: 'Tala bilan na ngai',
     verdictTitle: 'Bilan ya module',
     verdictLabel: 'Tika prudance',
     riskConfidenceLabel: 'Niveau ya vigilance',
     reflectionCardTitle: 'Oyo ozwaki',
-    takeawayLabel: 'Synth├¿se ya parcours',
+    takeawayLabel: 'Synthèse ya parcours',
     choiceCounts: (confirmed, modified) =>
-      `${confirmed} confirm├® ┬À ${modified} nuanc├®`,
+      `${confirmed} confirmé · ${modified} nuancé`,
     deleteContent: 'Longola contenu',
-    shareReflection: 'Kabola r├®flexion na ngai',
-    verifyPesacheck: 'Tala na PesaCheck',
+    shareReflection: 'Kabola réflexion na ngai',
     recommendationLabel: 'Recommendation',
     dimensionsSummaryLabel: 'Ba dimensions 5',
-    launching: 'Analyse ezali kosalaÔÇª',
-    shareCopied: 'R├®flexion ekopi',
+    launching: 'Analyse ezali kosala…',
+    shareCopied: 'Réflexion ekopi',
     continueWithoutAi: 'Kokoba sans IA',
     newModule: 'Module ya sika',
-    offline: 'Connexion limit├®e. Okoki kokoba koyekola na nzela ya moko.',
+    offline: 'Connexion limitée. Okoki kokoba koyekola na nzela ya moko.',
     offlineCompass:
       'IA elali mpo ya connexion, kasi boussole na yo ekoki kokoba.',
     degradedBanner:
-      'Analyse technique limit├®e ÔÇö ba services eza te. IA esalaki na ba preuves moke.',
+      'Analyse technique limitée — ba services eza te. IA esalaki na ba preuves moke.',
     emptyDimensionsTitle: 'Analyse ezali te',
-    emptyDimensionsHint: 'Bandisa v├®rification lisusu.',
+    emptyDimensionsHint: 'Bandisa vérification lisusu.',
     addImage: 'Bakisa photo',
     removeImage: 'Longola photo',
     confidence: (n) => `Confiance ${Math.round(n * 100)}%`,
-    languageLabel: 'Mon╔ök╔ö',
+    languageLabel: 'Lokota',
   },
   sw: {
     brand: 'Media Compass',
     tagline: 'Jifunze kufikiria kabla ya kushiriki',
     landingHeadline: 'Jifunze kuekeza uamuzi wako kabla ya kushiriki',
     landingLead:
-      'Media Compass inakufundisha kusoma maudhui, kuona ishara, kisha kuamua ÔÇö bila zana kufikiria kwa niaba yako.',
+      'Media Compass inakufundisha kusoma maudhui, kuona ishara, kisha kuamua — bila zana kufikiria kwa niaba yako.',
     landingCta: 'Ingia moduli',
     moduleLabel: 'Moduli ya uraia wa kidijitali',
     learnLabel: 'Lengo la kujifunza',
@@ -350,27 +343,26 @@ export const COPY: Record<Lang, Copy> = {
       'Toka na muhtasari wazi na uamuzi wenye uwajibikaji.',
     ],
     selectedImageAlt: 'Picha iliyochaguliwa',
-    placeholder: 'Bandika kiungo, maandishi au picha ya WhatsAppÔÇª',
+    placeholder: 'Bandika kiungo, maandishi au picha ya WhatsApp…',
     launch: 'Anzisha moduli',
-    footer: 'Mfumo wa Transmission HumaineÔäó ┬À Media Compass',
+    footer: 'Mfumo wa Transmission Humaine™ · Media Compass',
     depositTitle: 'Lete maudhui ya kujifunza',
     analysisRunningTitle: 'Angalia kabla ya kuhukumu',
     analysisRunningHint: 'Kila hatua ni lengo la uchunguzi. Fuata mbinu.',
     analysisStep: (current, total) => `Lengo ${current} / ${total}`,
     coAnalysisTitle: 'Chambua pamoja vipimo 5',
     coAnalysisHint: (answered, total) =>
-      `Masomo ┬À ${answered}/${total} ÔÇö mfumo unapendekeza, wewe unaamua`,
+      `Masomo · ${answered}/${total} — mfumo unapendekeza, wewe unaamua`,
     why: 'Ona ushahidi',
     evidenceLabel: 'Ishara na ushahidi',
     yourDecision: 'Uamuzi wako',
     confirm: 'Nakubali pendekezo',
     modify: 'Naboresha / nasahihisha',
     modifyOpinionLabel: 'Maoni yako',
-    modifyOpinionPlaceholder: 'Eleza kwa sentensi moja kwa nini unaboreshaÔÇª',
+    modifyOpinionPlaceholder: 'Eleza kwa sentensi moja kwa nini unaboresha…',
     continue: 'Endelea kwa tafakari',
     autoSuggestionLabel: 'Pendekezo la mfumo',
-    autoSuggestionText: (suggestion) =>
-      `Pendekezo: ${suggestion}. Thibitisha au ongeza nuance.`,
+    nuanceHint: 'Thibitisha au ongeza nuance.',
     thousandTestLabel: 'Daftari la tafakari',
     reflectionTitle:
       'Ikiwa vijana 10,000 wa DRC washiriki hii sasa, jamii inajifunza nini?',
@@ -382,13 +374,12 @@ export const COPY: Record<Lang, Copy> = {
     reflectionCardTitle: 'Unachochukua',
     takeawayLabel: 'Muhtasari wa safari',
     choiceCounts: (confirmed, modified) =>
-      `${confirmed} imethibitishwa ┬À ${modified} imeboreshwa`,
+      `${confirmed} imethibitishwa · ${modified} imeboreshwa`,
     deleteContent: 'Futa maudhui',
     shareReflection: 'Shiriki tafakari yangu',
-    verifyPesacheck: 'Thibitisha kwenye PesaCheck',
     recommendationLabel: 'Pendekezo',
     dimensionsSummaryLabel: 'Vipimo 5',
-    launching: 'Uchambuzi unaendeleaÔÇª',
+    launching: 'Uchambuzi unaendelea…',
     shareCopied: 'Tafakari imenakiliwa',
     continueWithoutAi: 'Endelea bila AI',
     newModule: 'Moduli mpya',
@@ -397,7 +388,7 @@ export const COPY: Record<Lang, Copy> = {
     offlineCompass:
       'AI imelala kwa sababu ya mtandao, lakini dira yako ya ndani inaweza kuendelea.',
     degradedBanner:
-      'Uchambuzi wa kiufundi umepungua ÔÇö huduma zingine hazikupatikana.',
+      'Uchambuzi wa kiufundi umepungua — huduma zingine hazikupatikana.',
     emptyDimensionsTitle: 'Hakuna uchambuzi',
     emptyDimensionsHint: 'Anza ukaguzi mpya kutoka skrini iliyotangulia.',
     addImage: 'Ambatanisha picha',
