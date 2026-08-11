@@ -1,4 +1,4 @@
-import { AnalysisCard } from '../components/AnalysisCard'
+﻿import { AnalysisCard } from '../components/AnalysisCard'
 import { AppShell } from '../components/AppShell'
 import { COPY } from '../data/content'
 import type { DimensionEval, DimensionKey, Lang, UserChoice } from '../types'
@@ -9,7 +9,9 @@ type Props = {
   dimensions: DimensionEval[]
   degraded?: boolean
   choices: Record<DimensionKey, UserChoice>
+  opinions: Record<DimensionKey, string>
   onChoice: (key: DimensionKey, choice: Exclude<UserChoice, null>) => void
+  onUserOpinion: (key: DimensionKey, text: string) => void
   onContinue: () => void
 }
 
@@ -19,7 +21,9 @@ export function CoAnalysisScreen({
   dimensions,
   degraded,
   choices,
+  opinions,
   onChoice,
+  onUserOpinion,
   onContinue,
 }: Props) {
   const copy = COPY[lang]
@@ -31,15 +35,15 @@ export function CoAnalysisScreen({
       lang={lang}
       step="coanalysis"
       onLangChange={onLangChange}
-      lessonEyebrow={`03 · ${copy.coAnalysisTitle}`}
+      lessonEyebrow={`03 ┬À ${copy.coAnalysisTitle}`}
       title={copy.coAnalysisHint(answeredCount, dimensions.length)}
       learnGoal={copy.learnGoals[2]}
       footer={
         <button
           type="button"
-          disabled={!answered || dimensions.length === 0}
+          disabled={dimensions.length > 0 ? !answered : false}
           onClick={onContinue}
-          className="btn-primary"
+          className="btn-primary min-h-12"
         >
           {copy.continue}
         </button>
@@ -47,15 +51,21 @@ export function CoAnalysisScreen({
     >
       <div className="space-y-4">
         {degraded ? (
-          <p role="status" className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">
-            Analyse technique limitée — certains services étaient indisponibles.
+          <p role="status" className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-warn">
+            {copy.degradedBanner}
           </p>
         ) : null}
 
         {dimensions.length === 0 ? (
-          <p role="status" className="rounded-xl bg-panel px-4 py-6 text-center text-sm text-muted">
-            Aucune analyse disponible. Relance une vérification depuis l&apos;écran précédent.
-          </p>
+          <div
+            role="status"
+            className="lesson-card px-5 py-10 text-center"
+          >
+            <p className="font-display text-sm font-semibold text-navy">
+              {copy.emptyDimensionsTitle}
+            </p>
+            <p className="mt-2 text-sm text-muted">{copy.emptyDimensionsHint}</p>
+          </div>
         ) : (
           dimensions.map((dimension, index) => (
             <AnalysisCard
@@ -63,15 +73,19 @@ export function CoAnalysisScreen({
               dimension={dimension}
               index={index}
               choice={choices[dimension.key]}
+              userOpinion={opinions[dimension.key] ?? ''}
               whyLabel={copy.why}
               evidenceLabel={copy.evidenceLabel}
               yourDecision={copy.yourDecision}
               confirmLabel={copy.confirm}
               modifyLabel={copy.modify}
+              modifyOpinionLabel={copy.modifyOpinionLabel}
+              modifyOpinionPlaceholder={copy.modifyOpinionPlaceholder}
               autoSuggestionLabel={copy.autoSuggestionLabel}
               autoSuggestionText={copy.autoSuggestionText}
               confidenceLabel={copy.confidence(dimension.confidence)}
               onChoice={(choice) => onChoice(dimension.key, choice)}
+              onUserOpinion={(text) => onUserOpinion(dimension.key, text)}
             />
           ))
         )}

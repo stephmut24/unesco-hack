@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { LandingScreen } from './screens/LandingScreen'
 import { EntryScreen } from './screens/EntryScreen'
 import { AnalysisScreen } from './screens/AnalysisScreen'
@@ -29,13 +29,29 @@ const emptyChoices = (): Record<DimensionKey, UserChoice> =>
     UserChoice
   >
 
+const emptyOpinions = (): Record<DimensionKey, string> =>
+  Object.fromEntries(DIMENSION_KEYS.map((key) => [key, ''])) as Record<
+    DimensionKey,
+    string
+  >
+
 function mapChoices(
   choices: Record<DimensionKey, UserChoice>,
+  opinions: Record<DimensionKey, string>,
 ): Record<DimensionKey, UserChoiceDetail> {
   return Object.fromEntries(
     DIMENSION_KEYS.map((key) => {
       const choice = choices[key]
-      if (choice === 'modify') return [key, { action: 'modify' as const }]
+      if (choice === 'modify') {
+        const opinion = opinions[key]?.trim()
+        return [
+          key,
+          {
+            action: 'modify' as const,
+            ...(opinion ? { userOpinion: opinion } : {}),
+          },
+        ]
+      }
       return [key, { action: 'confirm' as const }]
     }),
   ) as Record<DimensionKey, UserChoiceDetail>
@@ -47,6 +63,7 @@ function App() {
   const [text, setText] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [choices, setChoices] = useState(emptyChoices)
+  const [opinions, setOpinions] = useState(emptyOpinions)
   const [reflection, setReflection] = useState('')
   const [offline, setOffline] = useState(!navigator.onLine)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
@@ -54,6 +71,7 @@ function App() {
   const [completedPhases, setCompletedPhases] = useState(0)
   const [phaseSummaries, setPhaseSummaries] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [launching, setLaunching] = useState(false)
 
   useEffect(() => {
     document.documentElement.lang = lang
@@ -87,6 +105,7 @@ function App() {
   }, [dimensions, choices, lang])
 
   const handleLaunch = async () => {
+    setLaunching(true)
     setStep('analysis')
     setError(null)
     setAnalysisResult(null)
@@ -94,6 +113,7 @@ function App() {
     setCompletedPhases(0)
     setPhaseSummaries([])
     setChoices(emptyChoices())
+    setOpinions(emptyOpinions())
 
     try {
       const input = await buildAnalysisInput(text, imageFile, lang)
@@ -113,10 +133,36 @@ function App() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Désolé, la boussole a perdu le nord. Réessaye !',
+          : 'D├®sol├®, la boussole a perdu le nord. R├®essaye !',
       )
       setStep('entry')
+    } finally {
+      setLaunching(false)
     }
+  }
+
+  function clearContentToEntry() {
+    setText('')
+    setImageFile(null)
+    setChoices(emptyChoices())
+    setOpinions(emptyOpinions())
+    setReflection('')
+    setAnalysisResult(null)
+    setDimensions([])
+    setCompletedPhases(0)
+    setPhaseSummaries([])
+    setError(null)
+    setLaunching(false)
+    setStep('entry')
+  }
+
+  function continueOffline() {
+    setError(null)
+    setAnalysisResult(null)
+    setDimensions([])
+    setChoices(emptyChoices())
+    setOpinions(emptyOpinions())
+    setStep('reflection')
   }
 
   const handleReflectionContinue = async () => {
@@ -127,7 +173,7 @@ function App() {
     try {
       await saveUserEvaluation({
         analysisId: analysisResult.analysisId,
-        choices: mapChoices(choices),
+        choices: mapChoices(choices, opinions),
         reflection,
       })
     } catch (err) {
@@ -140,12 +186,14 @@ function App() {
     setText('')
     setImageFile(null)
     setChoices(emptyChoices())
+    setOpinions(emptyOpinions())
     setReflection('')
     setAnalysisResult(null)
     setDimensions([])
     setCompletedPhases(0)
     setPhaseSummaries([])
     setError(null)
+    setLaunching(false)
   }
 
   return (
@@ -177,7 +225,10 @@ function App() {
             imagePreview={imagePreview}
             onImageSelect={setImageFile}
             onLaunch={handleLaunch}
+            onContinueOffline={continueOffline}
             error={error}
+            loading={launching}
+            offline={offline}
           />
         ) : null}
 
@@ -186,6 +237,7 @@ function App() {
             lang={lang}
             completedPhases={completedPhases}
             phaseSummaries={phaseSummaries}
+            degraded={analysisResult?.degraded}
           />
         ) : null}
 
@@ -196,8 +248,15 @@ function App() {
             dimensions={dimensions}
             degraded={analysisResult?.degraded}
             choices={choices}
-            onChoice={(key, choice) =>
+            opinions={opinions}
+            onChoice={(key, choice) => {
               setChoices((prev) => ({ ...prev, [key]: choice }))
+              if (choice === 'confirm') {
+                setOpinions((prev) => ({ ...prev, [key]: '' }))
+              }
+            }}
+            onUserOpinion={(key, text) =>
+              setOpinions((prev) => ({ ...prev, [key]: text }))
             }
             onContinue={() => setStep('reflection')}
           />
@@ -219,7 +278,10 @@ function App() {
             reflection={reflection}
             verdict={verdict ?? undefined}
             degraded={analysisResult?.degraded}
+            dimensions={dimensions}
+            pesacheckUrl="https://pesacheck.org/"
             onRestart={restart}
+            onDeleteContent={clearContentToEntry}
           />
         ) : null}
       </PageTransition>
