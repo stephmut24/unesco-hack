@@ -1,6 +1,4 @@
 import type { ReactNode } from 'react'
-import { BrandLogo } from './BrandLogo'
-import { LanguageSwitch } from './LanguageSwitch'
 import { LearningRail } from './LearningRail'
 import { COPY } from '../data/content'
 import type { Lang, Step } from '../types'
@@ -20,8 +18,6 @@ type Props = {
 export function AppShell({
   lang,
   step,
-  onLangChange,
-  showLang = true,
   lessonEyebrow,
   title,
   learnGoal,
@@ -31,16 +27,7 @@ export function AppShell({
   const copy = COPY[lang]
 
   return (
-    <div className="classroom min-h-dvh">
-      <header className="sticky top-0 z-30 bg-navy shadow-[0_8px_24px_-16px_rgba(15,39,68,0.55)]">
-        <div className="app-shell flex items-center justify-between gap-3 px-4 py-3.5">
-          <BrandLogo height={44} priority className="max-w-[66%] rounded-md" />
-          {showLang && onLangChange ? (
-            <LanguageSwitch value={lang} onChange={onLangChange} />
-          ) : null}
-        </div>
-      </header>
-
+    <div className="classroom min-h-dvh pt-[6.25rem]">
       <div className="app-shell px-4 pt-5">
         <div className="lesson-card px-4 py-4">
           <p className="mb-3 text-center font-display text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-accent">

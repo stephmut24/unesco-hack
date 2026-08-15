@@ -16,10 +16,10 @@ export function PageTransition({ step, children }: Props) {
       <motion.div
         key={step}
         className="page-stage min-h-dvh"
-        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-        transition={{ duration: reduce ? 0.15 : 0.28, ease: [0.25, 0.1, 0.25, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: reduce ? 0.12 : 0.2, ease: [0.25, 0.1, 0.25, 1] }}
       >
         {children}
       </motion.div>
