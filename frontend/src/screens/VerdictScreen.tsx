@@ -1,6 +1,7 @@
 ﻿import { Share2, RotateCcw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { AppShell } from '../components/AppShell'
+import { DegradedNotice } from '../components/DegradedNotice'
 import { ProgressCompass } from '../components/ProgressCompass'
 import { COPY } from '../data/content'
 import type { DimensionEval, DimensionKey, Lang, UserChoice, Verdict } from '../types'
@@ -70,12 +71,18 @@ export function VerdictScreen({
     >
       <div className="fade-in space-y-4">
         {degraded ? (
-          <p role="status" className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-warn">
-            {copy.degradedBanner}
-          </p>
+          <DegradedNotice
+            title={copy.degradedBanner}
+            missing={copy.degradedMissing}
+            impact={copy.degradedImpact}
+          />
         ) : null}
 
-        <ProgressCompass score={score} label={copy.riskConfidenceLabel} />
+        <ProgressCompass
+          score={score}
+          label={copy.riskConfidenceLabel}
+          explanation={copy.scoreExplanation(score)}
+        />
 
         {verdict?.recommendation ? (
           <div className="lesson-card border-l-4 border-accent px-4 py-3.5">
@@ -138,6 +145,9 @@ export function VerdictScreen({
             <Share2 size={16} aria-hidden />
             {copy.shareReflection}
           </button>
+          <p className="px-1 text-center text-xs leading-relaxed text-muted">
+            {copy.shareHint}
+          </p>
           {shareStatus ? (
             <p role="status" className="text-center text-sm font-medium text-ok">
               {shareStatus}

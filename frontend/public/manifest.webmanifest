@@ -9,9 +9,9 @@
   "lang": "fr",
   "icons": [
     {
-      "src": "/Logo/logo.jpg",
+      "src": "/Logo/logo.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     }
   ]

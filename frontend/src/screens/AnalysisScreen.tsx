@@ -1,5 +1,6 @@
 ﻿import { Check, Loader2 } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
+import { DegradedNotice } from '../components/DegradedNotice'
 import { ANALYSIS_STEPS, COPY } from '../data/content'
 import type { Lang } from '../types'
 
@@ -35,9 +36,11 @@ export function AnalysisScreen({
     >
       <div className="space-y-4">
         {degraded && allDone ? (
-          <p role="status" className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-warn">
-            {copy.degradedBanner}
-          </p>
+          <DegradedNotice
+            title={copy.degradedBanner}
+            missing={copy.degradedMissing}
+            impact={copy.degradedImpact}
+          />
         ) : null}
 
         <div className="lesson-card fade-in p-5 sm:p-6">

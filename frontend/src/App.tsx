@@ -6,6 +6,7 @@ import { CoAnalysisScreen } from './screens/CoAnalysisScreen'
 import { ReflectionScreen } from './screens/ReflectionScreen'
 import { VerdictScreen } from './screens/VerdictScreen'
 import { PageTransition } from './components/PageTransition'
+import { AppHeader } from './components/AppHeader'
 import { runMediaAnalysisPipeline } from './api/analysis'
 import { saveUserEvaluation } from './api/evaluation'
 import { COPY } from './data/content'
@@ -209,6 +210,12 @@ function App() {
     setVerdict(null)
   }
 
+  const showAppHeader =
+    step === 'entry' ||
+    step === 'analysis' ||
+    step === 'coanalysis' ||
+    step === 'verdict'
+
   return (
     <>
       {offline ? (
@@ -218,6 +225,14 @@ function App() {
         >
           {COPY[lang].offline}
         </div>
+      ) : null}
+
+      {showAppHeader ? (
+        <AppHeader
+          lang={lang}
+          onLangChange={setLang}
+          showLang={step !== 'analysis' && step !== 'verdict'}
+        />
       ) : null}
 
       <PageTransition step={step}>

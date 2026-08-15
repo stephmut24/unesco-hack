@@ -14,6 +14,8 @@ type Props = {
   modifyOpinionLabel: string
   modifyOpinionPlaceholder: string
   autoSuggestionLabel: string
+  lessonLabel: string
+  statusHint: string
   nuanceHint: string
   confidenceLabel: string
   onChoice: (choice: Exclude<UserChoice, null>) => void
@@ -45,6 +47,8 @@ export function AnalysisCard({
   modifyOpinionLabel,
   modifyOpinionPlaceholder,
   autoSuggestionLabel,
+  lessonLabel,
+  statusHint,
   nuanceHint,
   confidenceLabel,
   onChoice,
@@ -64,7 +68,7 @@ export function AnalysisCard({
       <header className="flex items-start justify-between gap-3">
         <div>
           <p className="font-display text-[0.68rem] font-bold tracking-[0.12em] text-accent">
-            Leçon {String(index + 1).padStart(2, '0')} · {dimension.title}
+            {lessonLabel} · {dimension.title}
           </p>
           <h3 className="mt-2 font-display text-[1.1rem] font-bold leading-snug text-ink">
             {dimension.question}
@@ -99,6 +103,7 @@ export function AnalysisCard({
         <p className="mt-2 text-xs text-muted">
           {confidenceLabel} · {nuanceHint}
         </p>
+        <p className="mt-2 text-xs leading-relaxed text-navy">{statusHint}</p>
       </section>
 
       <button

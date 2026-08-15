@@ -1,7 +1,8 @@
 ﻿import { AnalysisCard } from '../components/AnalysisCard'
 import { AppShell } from '../components/AppShell'
+import { DegradedNotice } from '../components/DegradedNotice'
 import { COPY } from '../data/content'
-import type { DimensionEval, DimensionKey, Lang, UserChoice } from '../types'
+import type { DimensionEval, DimensionKey, Lang, RiskLevel, UserChoice } from '../types'
 
 type Props = {
   lang: Lang
@@ -29,6 +30,11 @@ export function CoAnalysisScreen({
   const copy = COPY[lang]
   const answered = dimensions.every((d) => choices[d.key] !== null)
   const answeredCount = dimensions.filter((d) => choices[d.key] !== null).length
+  const statusHint: Record<RiskLevel, string> = {
+    safe: copy.statusHintSafe,
+    warning: copy.statusHintWarning,
+    risk: copy.statusHintRisk,
+  }
 
   return (
     <AppShell
@@ -51,9 +57,11 @@ export function CoAnalysisScreen({
     >
       <div className="space-y-4">
         {degraded ? (
-          <p role="status" className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-warn">
-            {copy.degradedBanner}
-          </p>
+          <DegradedNotice
+            title={copy.degradedBanner}
+            missing={copy.degradedMissing}
+            impact={copy.degradedImpact}
+          />
         ) : null}
 
         {dimensions.length === 0 ? (
@@ -82,6 +90,8 @@ export function CoAnalysisScreen({
               modifyOpinionLabel={copy.modifyOpinionLabel}
               modifyOpinionPlaceholder={copy.modifyOpinionPlaceholder}
               autoSuggestionLabel={copy.autoSuggestionLabel}
+              lessonLabel={copy.lessonLabel(index + 1)}
+              statusHint={statusHint[dimension.status]}
               nuanceHint={copy.nuanceHint}
               confidenceLabel={copy.confidence(dimension.confidence)}
               onChoice={(choice) => onChoice(dimension.key, choice)}

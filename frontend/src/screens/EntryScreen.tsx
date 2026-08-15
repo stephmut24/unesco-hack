@@ -95,6 +95,7 @@ export function EntryScreen({
               disabled={loading}
               className="field"
             />
+            <p className="text-xs leading-relaxed text-muted">{copy.entryHint}</p>
 
             <div className="flex flex-wrap gap-2">
               <input
