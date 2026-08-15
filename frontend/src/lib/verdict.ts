@@ -17,7 +17,7 @@ const VERDICT_LABELS: Record<
     recommendations: {
       safe: 'Tu peux partager en restant vigilant sur le contexte.',
       warning: 'Vérifie avant de partager. Consulte une source fiable.',
-      risk: 'Ne partage pas. Vérifie sur PesaCheck ou une source officielle.',
+      risk: 'Ne partage pas. Vérifie auprès d\'une source officielle ou fiable.',
     },
   },
   en: {
@@ -27,7 +27,7 @@ const VERDICT_LABELS: Record<
     recommendations: {
       safe: 'You may share while staying mindful of context.',
       warning: 'Verify before sharing. Check a reliable source.',
-      risk: 'Do not share. Verify on PesaCheck or an official source.',
+      risk: 'Do not share. Verify with an official or reliable source.',
     },
   },
   ln: {
@@ -37,7 +37,7 @@ const VERDICT_LABELS: Record<
     recommendations: {
       safe: 'Okoki kokabisa kasi tala contexte.',
       warning: 'Tala liboso ya kokabisa.',
-      risk: 'Kokabisa te. Tala na PesaCheck.',
+      risk: 'Kokabisa te. Tala na source ya solo to officielle.',
     },
   },
   sw: {
@@ -47,7 +47,7 @@ const VERDICT_LABELS: Record<
     recommendations: {
       safe: 'Unaweza kushiriki ukizingatia muktadha.',
       warning: 'Thibitisha kabla ya kushiriki.',
-      risk: 'Usishiriki. Thibitisha kwenye PesaCheck.',
+      risk: 'Usishiriki. Thibitisha kwa chanzo rasmi au cha kuaminika.',
     },
   },
 }

@@ -22,6 +22,7 @@ import {
   type Step,
   type UserChoice,
   type UserChoiceDetail,
+  type Verdict,
 } from './types'
 
 const emptyChoices = (): Record<DimensionKey, UserChoice> =>
@@ -73,6 +74,7 @@ function App() {
   const [phaseSummaries, setPhaseSummaries] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [launching, setLaunching] = useState(false)
+  const [verdict, setVerdict] = useState<Verdict | null>(null)
 
   useEffect(() => {
     document.documentElement.lang = lang
@@ -100,11 +102,6 @@ function App() {
     }
   }, [])
 
-  const verdict = useMemo(() => {
-    if (dimensions.length === 0) return null
-    return computeVerdict(dimensions, choices, lang)
-  }, [dimensions, choices, lang])
-
   const handleLaunch = async () => {
     setLaunching(true)
     setStep('analysis')
@@ -115,6 +112,7 @@ function App() {
     setPhaseSummaries([])
     setChoices(emptyChoices())
     setOpinions(emptyOpinions())
+    setVerdict(null)
 
     try {
       const input = await buildAnalysisInput(text, imageFile, lang)
@@ -154,6 +152,7 @@ function App() {
     setPhaseSummaries([])
     setError(null)
     setLaunching(false)
+    setVerdict(null)
     setStep('entry')
   }
 
@@ -163,23 +162,36 @@ function App() {
     setDimensions([])
     setChoices(emptyChoices())
     setOpinions(emptyOpinions())
+    setVerdict(null)
     setStep('reflection')
   }
 
   const handleReflectionContinue = async () => {
-    setStep('verdict')
+    if (!analysisResult) {
+      setVerdict(null)
+      setStep('verdict')
+      return
+    }
 
-    if (!analysisResult) return
+    const fallback = () => computeVerdict(dimensions, choices, lang)
 
     try {
-      await saveUserEvaluation({
-        analysisId: analysisResult.analysisId,
-        choices: mapChoices(choices, opinions),
-        reflection,
-      })
+      const result = await saveUserEvaluation(
+        {
+          analysisId: analysisResult.analysisId,
+          choices: mapChoices(choices, opinions),
+          reflection,
+          lang,
+        },
+        fallback,
+      )
+      setVerdict(result)
     } catch (err) {
       console.error('Erreur sauvegarde:', err)
+      setVerdict(fallback())
     }
+
+    setStep('verdict')
   }
 
   function restart() {
@@ -195,6 +207,7 @@ function App() {
     setPhaseSummaries([])
     setError(null)
     setLaunching(false)
+    setVerdict(null)
   }
 
   const showAppHeader =
@@ -294,7 +307,6 @@ function App() {
             verdict={verdict ?? undefined}
             degraded={analysisResult?.degraded}
             dimensions={dimensions}
-            pesacheckUrl="https://pesacheck.org/"
             onRestart={restart}
             onDeleteContent={clearContentToEntry}
           />

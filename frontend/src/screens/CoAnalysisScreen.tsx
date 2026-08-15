@@ -90,9 +90,9 @@ export function CoAnalysisScreen({
               modifyOpinionLabel={copy.modifyOpinionLabel}
               modifyOpinionPlaceholder={copy.modifyOpinionPlaceholder}
               autoSuggestionLabel={copy.autoSuggestionLabel}
-              autoSuggestionText={copy.autoSuggestionText}
               lessonLabel={copy.lessonLabel(index + 1)}
               statusHint={statusHint[dimension.status]}
+              nuanceHint={copy.nuanceHint}
               confidenceLabel={copy.confidence(dimension.confidence)}
               onChoice={(choice) => onChoice(dimension.key, choice)}
               onUserOpinion={(text) => onUserOpinion(dimension.key, text)}

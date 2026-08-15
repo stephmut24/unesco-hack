@@ -56,6 +56,7 @@ export type DimensionLabel = {
 /** Affichage d'une dimension (labels UI + données backend) */
 export type DimensionEval = DimensionLabel & {
   aiSuggestion: string
+  aiSummary: string
   confidence: number
   status: RiskLevel
   technicalReasons: string[]
@@ -64,6 +65,7 @@ export type DimensionEval = DimensionLabel & {
 /** Données IA brutes pour une dimension (sans labels i18n) */
 export type RawAiDimension = {
   aiSuggestion: string
+  aiSummary: string
   confidence: number
   status: RiskLevel
   technicalReasons: string[]
@@ -125,9 +127,10 @@ export type UserEvaluation = {
   analysisId: string
   choices: Record<DimensionKey, UserChoiceDetail>
   reflection: string
+  lang: Lang
 }
 
-/** Verdict calculé côté frontend */
+/** Verdict calculé côté backend (save-evaluation) */
 export type Verdict = {
   score: number
   label: string
@@ -144,6 +147,7 @@ export type AnalyzeContentResponse = {
 /** Réponse API save-evaluation */
 export type SaveEvaluationResponse = {
   success: boolean
+  verdict?: Verdict
   error?: string
 }
 

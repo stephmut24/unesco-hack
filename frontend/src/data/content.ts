@@ -98,6 +98,7 @@ type Copy = {
   continue: string
   autoSuggestionLabel: string
   autoSuggestionText: (suggestion: string) => string
+  nuanceHint: string
   lessonLabel: (n: number) => string
   statusHintSafe: string
   statusHintWarning: string
@@ -181,6 +182,7 @@ export const COPY: Record<Lang, Copy> = {
     autoSuggestionLabel: 'Proposition du système',
     autoSuggestionText: (suggestion) =>
       `Proposition : ${suggestion}. À toi de valider ou de corriger.`,
+    nuanceHint: 'À toi de valider ou de corriger.',
     lessonLabel: (n) => `Étape ${String(n).padStart(2, '0')}`,
     statusHintSafe: 'Peu de signaux d’alerte. Vérifie quand même le contexte avant de partager.',
     statusHintWarning: 'Des doutes restent. Cherche une preuve ou une source fiable.',
@@ -278,6 +280,7 @@ export const COPY: Record<Lang, Copy> = {
     autoSuggestionLabel: 'System proposal',
     autoSuggestionText: (suggestion) =>
       `Proposal: ${suggestion}. Validate it or correct it.`,
+    nuanceHint: 'Validate it or correct it.',
     lessonLabel: (n) => `Step ${String(n).padStart(2, '0')}`,
     statusHintSafe: 'Few warning signs. Still check the context before sharing.',
     statusHintWarning: 'Some doubts remain. Look for proof or a trusted source.',
@@ -373,6 +376,7 @@ export const COPY: Record<Lang, Copy> = {
     autoSuggestionLabel: 'Proposition ya système',
     autoSuggestionText: (suggestion) =>
       `Proposition: ${suggestion}. Kondima to kobongola.`,
+    nuanceHint: 'Kondima to kobongola.',
     lessonLabel: (n) => `Etape ${String(n).padStart(2, '0')}`,
     statusHintSafe: 'Ba alarmes moke. Tala contexte liboso ya kokabola.',
     statusHintWarning: 'Mwa doute ezali. Luka preuve to source ya solo.',
@@ -467,6 +471,7 @@ export const COPY: Record<Lang, Copy> = {
     autoSuggestionLabel: 'Pendekezo la mfumo',
     autoSuggestionText: (suggestion) =>
       `Pendekezo: ${suggestion}. Thibitisha au sahihisha.`,
+    nuanceHint: 'Thibitisha au sahihisha.',
     lessonLabel: (n) => `Hatua ${String(n).padStart(2, '0')}`,
     statusHintSafe: 'Ishara chache za hatari. Angalia muktadha kabla ya kushiriki.',
     statusHintWarning: 'Mashaka bado. Tafuta ushahidi au chanzo salama.',

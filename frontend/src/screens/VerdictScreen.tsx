@@ -1,4 +1,4 @@
-﻿import { ExternalLink, Share2, RotateCcw, Trash2 } from 'lucide-react'
+﻿import { Share2, RotateCcw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { AppShell } from '../components/AppShell'
 import { DegradedNotice } from '../components/DegradedNotice'
@@ -13,7 +13,6 @@ type Props = {
   verdict?: Verdict
   degraded?: boolean
   dimensions?: DimensionEval[]
-  pesacheckUrl?: string
   onRestart: () => void
   onDeleteContent: () => void
 }
@@ -31,7 +30,6 @@ export function VerdictScreen({
   verdict,
   degraded,
   dimensions = [],
-  pesacheckUrl = 'https://pesacheck.org/',
   onRestart,
   onDeleteContent,
 }: Props) {
@@ -135,15 +133,6 @@ export function VerdictScreen({
         </div>
 
         <div className="space-y-2.5 pt-1">
-          <a
-            href={pesacheckUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-quiet inline-flex min-h-12 w-full font-display text-sm font-bold"
-          >
-            <ExternalLink size={16} aria-hidden />
-            {copy.verifyPesacheck}
-          </a>
           <button
             type="button"
             onClick={onDeleteContent}
