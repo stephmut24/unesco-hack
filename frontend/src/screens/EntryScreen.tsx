@@ -43,7 +43,7 @@ export function EntryScreen({
       lang={lang}
       step="entry"
       onLangChange={onLangChange}
-      lessonEyebrow={`01 ┬À ${copy.depositTitle}`}
+      lessonEyebrow={`01 · ${copy.depositTitle}`}
       title={copy.tagline}
     >
       <motion.div
@@ -95,6 +95,7 @@ export function EntryScreen({
               disabled={loading}
               className="field"
             />
+            <p className="text-xs leading-relaxed text-muted">{copy.entryHint}</p>
 
             <div className="flex flex-wrap gap-2">
               <input

@@ -1,11 +1,10 @@
 import type { Lang } from '../types'
 import { COPY } from '../data/content'
 
-const LABELS: Record<Lang, string> = {
+const UI_LANGS = ['fr', 'en'] as const
+const LABELS: Record<(typeof UI_LANGS)[number], string> = {
   fr: 'FR',
   en: 'EN',
-  ln: 'LN',
-  sw: 'SW',
 }
 
 type Props = {
@@ -32,7 +31,7 @@ export function LanguageSwitch({
       role="group"
       aria-label={COPY[value].languageLabel}
     >
-      {(Object.keys(LABELS) as Lang[]).map((lang, i) => {
+      {UI_LANGS.map((lang, i) => {
         const active = value === lang
         return (
           <button

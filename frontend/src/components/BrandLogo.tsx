@@ -4,7 +4,7 @@ type Props = {
   priority?: boolean
 }
 
-const LOGO_SRC = '/Logo/logo.jpg'
+const LOGO_SRC = '/Logo/logo.png'
 
 export function BrandLogo({
   height = 52,

@@ -47,7 +47,7 @@
   }
 
   .page-stage {
-    transform-origin: 50% 40%;
+    /* transition de page gérée par Motion */
   }
 
   button,

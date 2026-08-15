@@ -15,6 +15,8 @@ type Props = {
   modifyOpinionPlaceholder: string
   autoSuggestionLabel: string
   autoSuggestionText: (suggestion: string) => string
+  lessonLabel: string
+  statusHint: string
   confidenceLabel: string
   onChoice: (choice: Exclude<UserChoice, null>) => void
   onUserOpinion: (text: string) => void
@@ -46,6 +48,8 @@ export function AnalysisCard({
   modifyOpinionPlaceholder,
   autoSuggestionLabel,
   autoSuggestionText,
+  lessonLabel,
+  statusHint,
   confidenceLabel,
   onChoice,
   onUserOpinion,
@@ -65,7 +69,7 @@ export function AnalysisCard({
       <header className="flex items-start justify-between gap-3">
         <div>
           <p className="font-display text-[0.68rem] font-bold tracking-[0.12em] text-accent">
-            Le├ºon {String(index + 1).padStart(2, '0')} ┬À {dimension.title}
+            {lessonLabel} · {dimension.title}
           </p>
           <h3 className="mt-2 font-display text-[1.1rem] font-bold leading-snug text-ink">
             {dimension.question}
@@ -78,7 +82,7 @@ export function AnalysisCard({
         </span>
       </header>
 
-      {/* Bulle avis IA ÔÇö jaune (spec) */}
+      {/* Bulle avis IA — jaune (spec) */}
       <section className="mt-4 rounded-xl bg-amber-50 px-4 py-3.5 text-ink">
         <p className="font-display text-[0.68rem] font-bold uppercase tracking-wider text-warn">
           {autoSuggestionLabel}
@@ -91,6 +95,7 @@ export function AnalysisCard({
           {suggestionText}
         </p>
         <p className="mt-1.5 text-xs text-muted">{confidenceLabel}</p>
+        <p className="mt-2 text-xs leading-relaxed text-navy">{statusHint}</p>
       </section>
 
       <button

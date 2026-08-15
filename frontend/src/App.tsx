@@ -133,7 +133,7 @@ function App() {
       setError(
         err instanceof Error
           ? err.message
-          : 'D├®sol├®, la boussole a perdu le nord. R├®essaye !',
+          : 'Désolé, la boussole a perdu le nord. Réessaye !',
       )
       setStep('entry')
     } finally {
