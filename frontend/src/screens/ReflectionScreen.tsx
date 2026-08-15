@@ -20,7 +20,7 @@ export function ReflectionScreen({ lang, value, onChange, onContinue }: Props) {
     <div className="min-h-dvh bg-[#0b1f3a] text-white">
       <div className="app-shell flex min-h-dvh flex-col px-4 py-8 pb-10">
         <span className="inline-flex min-h-10 w-fit items-center rounded-full bg-white/10 px-3 py-1 font-display text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-sky-100">
-          04 ┬À {copy.thousandTestLabel}
+          04 · {copy.thousandTestLabel}
         </span>
 
         <div className="mt-5 rounded-2xl bg-white/10 px-4 py-3.5 text-sm leading-relaxed text-sky-50/95">

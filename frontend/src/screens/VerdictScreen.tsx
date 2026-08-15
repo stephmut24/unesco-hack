@@ -1,6 +1,7 @@
-﻿import { ExternalLink, Share2, RotateCcw, Trash2 } from 'lucide-react'
+﻿import { Share2, RotateCcw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { AppShell } from '../components/AppShell'
+import { DegradedNotice } from '../components/DegradedNotice'
 import { ProgressCompass } from '../components/ProgressCompass'
 import { COPY } from '../data/content'
 import type { DimensionEval, DimensionKey, Lang, UserChoice, Verdict } from '../types'
@@ -12,7 +13,6 @@ type Props = {
   verdict?: Verdict
   degraded?: boolean
   dimensions?: DimensionEval[]
-  pesacheckUrl?: string
   onRestart: () => void
   onDeleteContent: () => void
 }
@@ -30,7 +30,6 @@ export function VerdictScreen({
   verdict,
   degraded,
   dimensions = [],
-  pesacheckUrl = 'https://pesacheck.org/',
   onRestart,
   onDeleteContent,
 }: Props) {
@@ -43,7 +42,7 @@ export function VerdictScreen({
   const verdictLabel = verdict?.label ?? copy.verdictLabel
 
   async function shareReflection() {
-    const payload = `${copy.brand}\n${verdictLabel}\n\n┬½ ${reflection.trim()} ┬╗`
+    const payload = `${copy.brand}\n${verdictLabel}\n\n« ${reflection.trim()} »`
     if (navigator.share) {
       try {
         await navigator.share({ title: copy.brand, text: payload })
@@ -66,21 +65,24 @@ export function VerdictScreen({
       lang={lang}
       step="verdict"
       showLang={false}
-      lessonEyebrow={`05 ┬À ${copy.verdictTitle}`}
+      lessonEyebrow={`05 · ${copy.verdictTitle}`}
       title={verdictLabel}
       learnGoal={copy.learnGoals[4]}
     >
       <div className="fade-in space-y-4">
         {degraded ? (
-          <p role="status" className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-warn">
-            {copy.degradedBanner}
-          </p>
+          <DegradedNotice
+            title={copy.degradedBanner}
+            missing={copy.degradedMissing}
+            impact={copy.degradedImpact}
+          />
         ) : null}
 
-        <ProgressCompass score={score} label={copy.riskConfidenceLabel} />
-        {verdict?.recommendation ? (
-          <p className="text-sm leading-relaxed text-muted">{verdict.recommendation}</p>
-        ) : null}
+        <ProgressCompass
+          score={score}
+          label={copy.riskConfidenceLabel}
+          explanation={copy.scoreExplanation(score)}
+        />
 
         {verdict?.recommendation ? (
           <div className="lesson-card border-l-4 border-accent px-4 py-3.5">
@@ -123,7 +125,7 @@ export function VerdictScreen({
             {copy.reflectionCardTitle}
           </p>
           <p className="mt-2.5 text-sm leading-relaxed text-ink">
-            ┬½ {reflection.trim()} ┬╗
+            « {reflection.trim()} »
           </p>
           <p className="mt-3 text-xs text-muted">
             {copy.choiceCounts(confirmed, modified)}
@@ -131,15 +133,6 @@ export function VerdictScreen({
         </div>
 
         <div className="space-y-2.5 pt-1">
-          <a
-            href={pesacheckUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-quiet inline-flex min-h-12 w-full font-display text-sm font-bold"
-          >
-            <ExternalLink size={16} aria-hidden />
-            {copy.verifyPesacheck}
-          </a>
           <button
             type="button"
             onClick={onDeleteContent}
@@ -152,6 +145,9 @@ export function VerdictScreen({
             <Share2 size={16} aria-hidden />
             {copy.shareReflection}
           </button>
+          <p className="px-1 text-center text-xs leading-relaxed text-muted">
+            {copy.shareHint}
+          </p>
           {shareStatus ? (
             <p role="status" className="text-center text-sm font-medium text-ok">
               {shareStatus}

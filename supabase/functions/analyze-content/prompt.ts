@@ -26,7 +26,7 @@ export function buildAnalysisPrompt(
     ? 'Phase 1 (Source) : domaine, HTTPS, Whois, risque domaine'
     : null
   const phase2 = collectedFacts.evidenceFacts
-    ? 'Phase 2 (Evidence) : page HTML, Safe Browsing, fact-checks, PesaCheck'
+    ? 'Phase 2 (Evidence) : page HTML, Safe Browsing, fact-checks'
     : null
   const phase3 = collectedFacts.technicalSignals
     ? 'Phase 3 (Technique) : signaux compilés'
@@ -54,10 +54,13 @@ ${content.slice(0, 4000)}
 ${LANG_INSTRUCTION[lang] ?? LANG_INSTRUCTION.fr}
 
 Pour CHAQUE dimension, produis :
-- aiSuggestion : avis court (ex. "Fiable", "Douteux", "Risque élevé")
+- aiSuggestion : label court (2-4 mots, ex. "Douteux", "Sensationnalisme détecté", "Source fiable")
+- aiSummary : synthèse pédagogique de 1 à 2 phrases en langage simple pour un jeune en RDC.
+  Explique ce qu'on a observé et pourquoi cette proposition, sans moraliser.
+  Ne répète pas mot pour mot les technicalReasons — interprète-les.
 - confidence : 0.0 à 1.0
 - status : "safe" | "warning" | "risk"
-- technicalReasons : 2 à 4 raisons TIRÉES des preuves ci-dessus (cite domaine, fact-check, signal technique, etc.)
+- technicalReasons : 2 à 4 raisons factuelles TIRÉES des preuves ci-dessus (cite domaine, fact-check, signal technique, etc.)
 
 Mapping dimensions ↔ preuves :
 - source     → domaine, HTTPS, Whois, domainRisk, auteur
@@ -68,7 +71,13 @@ Mapping dimensions ↔ preuves :
 
 Réponds UNIQUEMENT en JSON valide :
 {
-  "source": { "aiSuggestion": "...", "confidence": 0.0, "status": "safe|warning|risk", "technicalReasons": ["...", "..."] },
+  "source": {
+    "aiSuggestion": "...",
+    "aiSummary": "...",
+    "confidence": 0.0,
+    "status": "safe|warning|risk",
+    "technicalReasons": ["...", "..."]
+  },
   "evidence": { ... },
   "intent": { ... },
   "transmission": { ... },
@@ -82,19 +91,44 @@ export function buildMockEvaluation(degraded: boolean) {
     ? 'Analyse en mode dégradé — services externes indisponibles.'
     : 'Analyse simulée — IA indisponible.'
 
-  const dimension = (suggestion: string, status: 'safe' | 'warning' | 'risk') => ({
+  const dimension = (
+    suggestion: string,
+    summary: string,
+    status: 'safe' | 'warning' | 'risk',
+  ) => ({
     aiSuggestion: suggestion,
+    aiSummary: summary,
     confidence: 0.6,
     status,
     technicalReasons: [note, 'Vérifie manuellement la source et le contexte.'],
   })
 
   return {
-    source: dimension('À vérifier', 'warning'),
-    evidence: dimension('Preuves insuffisantes', 'warning'),
-    intent: dimension('Intention incertaine', 'warning'),
-    transmission: dimension('Impact social à évaluer', 'warning'),
-    impact: dimension('Prudence recommandée', 'warning'),
+    source: dimension(
+      'À vérifier',
+      "L'origine de ce contenu n'a pas pu être évaluée automatiquement. Utilise les indices ci-dessous et ton jugement.",
+      'warning',
+    ),
+    evidence: dimension(
+      'Preuves insuffisantes',
+      "Aucune preuve solide n'a été trouvée lors de la collecte. Cherche des sources indépendantes avant de partager.",
+      'warning',
+    ),
+    intent: dimension(
+      'Intention incertaine',
+      "On n'a pas pu analyser l'intention du message. Lis le contenu avec prudence et repère les signes de manipulation.",
+      'warning',
+    ),
+    transmission: dimension(
+      'Impact social à évaluer',
+      'Réfléchis à ce que ce partage pourrait normaliser dans ta communauté avant de le relayer.',
+      'warning',
+    ),
+    impact: dimension(
+      'Prudence recommandée',
+      "Si beaucoup de personnes partagent sans vérifier, une rumeur peut se propager rapidement. Prends le temps de réfléchir.",
+      'warning',
+    ),
     confidenceScore: 0.6,
   }
 }

@@ -1,5 +1,6 @@
 import { isSupabaseConfigured } from '../lib/supabase'
-import type { SaveEvaluationResponse, UserEvaluation } from '../types'
+import { computeVerdict } from '../lib/verdict'
+import type { SaveEvaluationResponse, UserEvaluation, Verdict } from '../types'
 
 function getSupabaseConfig() {
   const url = import.meta.env.VITE_SUPABASE_URL
@@ -8,8 +9,14 @@ function getSupabaseConfig() {
   return { url, key }
 }
 
-export async function saveUserEvaluation(evaluation: UserEvaluation): Promise<void> {
-  if (!isSupabaseConfigured) return
+/** Sauvegarde la co-analyse et récupère le verdict calculé par le backend */
+export async function saveUserEvaluation(
+  evaluation: UserEvaluation,
+  fallback?: () => Verdict,
+): Promise<Verdict | null> {
+  if (!isSupabaseConfigured) {
+    return fallback?.() ?? null
+  }
 
   const { url, key } = getSupabaseConfig()
   const endpoint = `${url}/functions/v1/save-evaluation`
@@ -27,11 +34,21 @@ export async function saveUserEvaluation(evaluation: UserEvaluation): Promise<vo
     })
   } catch {
     console.warn('Sauvegarde impossible — Edge Function injoignable.')
-    return
+    return fallback?.() ?? null
   }
 
   const data = (await response.json()) as SaveEvaluationResponse
   if (!response.ok || !data?.success) {
     console.warn('Sauvegarde échouée:', data?.error ?? response.status)
+    return fallback?.() ?? null
   }
+
+  return data.verdict ?? fallback?.() ?? null
+}
+
+/** Fallback local si le backend est indisponible (mode offline) */
+export function computeLocalVerdict(
+  ...args: Parameters<typeof computeVerdict>
+): Verdict {
+  return computeVerdict(...args)
 }

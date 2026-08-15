@@ -11,13 +11,14 @@ const ORDER: Step[] = [
 type Props = {
   current: Step
   labels: string[]
+  ariaLabel: string
 }
 
-export function LearningRail({ current, labels }: Props) {
+export function LearningRail({ current, labels, ariaLabel }: Props) {
   const activeIndex = ORDER.indexOf(current)
 
   return (
-    <nav aria-label="Parcours d'apprentissage" className="w-full">
+    <nav aria-label={ariaLabel} className="w-full">
       <ol className="flex items-center gap-0.5">
         {ORDER.map((step, i) => {
           const done = i < activeIndex
@@ -38,7 +39,7 @@ export function LearningRail({ current, labels }: Props) {
                   {done ? '✓' : i + 1}
                 </span>
                 <span
-                  className={`hidden truncate text-center text-[0.62rem] font-semibold sm:block ${
+                  className={`max-w-full truncate text-center text-[0.58rem] font-semibold leading-tight ${
                     active ? 'text-navy' : 'text-muted'
                   }`}
                 >

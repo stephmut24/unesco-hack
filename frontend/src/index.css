@@ -19,8 +19,8 @@
   --color-ok: #178a63;
   --color-warn: #b7791f;
   --color-danger: #c23b2e;
-  --font-display: 'Montserrat', sans-serif;
-  --font-body: 'Source Sans 3', sans-serif;
+  --font-display: 'Noto Sans Display', 'Noto Sans', system-ui, sans-serif;
+  --font-body: 'Noto Sans', system-ui, sans-serif;
   --shadow-card: 0 12px 32px -18px rgb(16 24 40 / 0.28);
   --shadow-soft: 0 4px 16px -8px rgb(16 24 40 / 0.12);
 }
@@ -44,10 +44,11 @@
     color: var(--color-ink);
     background: var(--color-canvas);
     -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'kern' 1, 'liga' 1;
   }
 
   .page-stage {
-    transform-origin: 50% 40%;
+    /* transition de page gérée par Motion */
   }
 
   button,

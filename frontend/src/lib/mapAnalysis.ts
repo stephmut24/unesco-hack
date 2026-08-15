@@ -10,6 +10,7 @@ import {
 
 const DEFAULT_DIMENSION: RawAiDimension = {
   aiSuggestion: 'Indéterminé',
+  aiSummary: 'Analyse partielle — données insuffisantes pour produire une synthèse.',
   confidence: 0.5,
   status: 'warning',
   technicalReasons: ['Analyse partielle — données insuffisantes'],
@@ -34,15 +35,27 @@ function normalizeDimension(raw: unknown): RawAiDimension {
           ? [d.explanation]
           : DEFAULT_DIMENSION.technicalReasons
 
-  return {
-    aiSuggestion:
-      typeof d.aiSuggestion === 'string'
-        ? d.aiSuggestion
-        : typeof d.ai_suggestion === 'string'
-          ? d.ai_suggestion
+  const aiSuggestion =
+    typeof d.aiSuggestion === 'string'
+      ? d.aiSuggestion
+      : typeof d.ai_suggestion === 'string'
+        ? d.ai_suggestion
+        : DEFAULT_DIMENSION.aiSuggestion
+
+  const aiSummary =
+    typeof d.aiSummary === 'string'
+      ? d.aiSummary
+      : typeof d.ai_summary === 'string'
+        ? d.ai_summary
+        : typeof d.summary === 'string'
+          ? d.summary
           : typeof d.explanation === 'string'
             ? d.explanation
-            : DEFAULT_DIMENSION.aiSuggestion,
+            : aiSuggestion
+
+  return {
+    aiSuggestion,
+    aiSummary,
     confidence:
       typeof d.confidence === 'number'
         ? Math.min(1, Math.max(0, d.confidence))
@@ -72,6 +85,7 @@ export function mapToDimensions(raw: RawAiEvaluation, lang: Lang): DimensionEval
     return {
       ...label,
       aiSuggestion: ai.aiSuggestion,
+      aiSummary: ai.aiSummary,
       confidence: ai.confidence,
       status: ai.status,
       technicalReasons: ai.technicalReasons,

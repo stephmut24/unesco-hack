@@ -5,7 +5,7 @@ import {
   summarizeHtmlEvidence,
   type HtmlEvidence,
 } from './services/htmlEvidence.ts'
-import { pesacheckSearchUrl, searchFactChecks } from './services/factCheck.ts'
+import { searchFactChecks } from './services/factCheck.ts'
 
 type ContentType = 'url' | 'text' | 'image'
 
@@ -113,9 +113,8 @@ export async function runEvidencePhase(
       evidenceFacts.html = htmlEv
       findings.push(...summarizeHtmlEvidence(htmlEv))
 
-      // --- Fact-checking (Google Fact Check API + lien PesaCheck) ---
+      // --- Fact-checking (Google Fact Check API) ---
       const searchQuery = htmlEv.pageTitle ?? value
-      evidenceFacts.pesacheckUrl = pesacheckSearchUrl(searchQuery)
 
       const factChecks = await searchFactChecks(searchQuery, env.factCheckKey)
       evidenceFacts.factChecks = factChecks
@@ -127,7 +126,7 @@ export async function runEvidencePhase(
           )
         }
       } else {
-        findings.push(`PesaCheck : recherche disponible (${evidenceFacts.pesacheckUrl})`)
+        findings.push('Pas de fact-check Google correspondant')
       }
     } catch {
       evidenceFacts.limited = true
@@ -153,7 +152,6 @@ export async function runEvidencePhase(
 
     const factChecks = await searchFactChecks(value.slice(0, 200), env.factCheckKey)
     evidenceFacts.factChecks = factChecks
-    evidenceFacts.pesacheckUrl = pesacheckSearchUrl(value.slice(0, 100))
     if (factChecks.claims.length > 0) {
       findings.push(`${factChecks.claims.length} fact-check(s) Google trouvé(s)`)
     } else {
@@ -230,9 +228,6 @@ export async function runTechnicalPhase(
         ? `[Evidence] ${factChecks.claims.length} fact-check(s) trouvé(s)`
         : '[Evidence] Aucun fact-check Google correspondant',
     )
-  }
-  if (evidence.pesacheckUrl) {
-    signals.push(`[Evidence] Vérifier sur PesaCheck : ${evidence.pesacheckUrl}`)
   }
 
   // --- Signaux texte ---

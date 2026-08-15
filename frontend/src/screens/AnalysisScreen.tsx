@@ -1,13 +1,14 @@
 ﻿import { Check, Loader2 } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
+import { DegradedNotice } from '../components/DegradedNotice'
 import { ANALYSIS_STEPS, COPY } from '../data/content'
 import type { Lang } from '../types'
 
 type Props = {
   lang: Lang
-  /** Nombre de phases termin├®es (0ÔÇô4) */
+  /** Nombre de phases terminées (0–4) */
   completedPhases: number
-  /** R├®sum├® backend par ├®tape termin├®e */
+  /** Résumé backend par étape terminée */
   phaseSummaries?: string[]
   degraded?: boolean
 }
@@ -29,15 +30,17 @@ export function AnalysisScreen({
       lang={lang}
       step="analysis"
       showLang={false}
-      lessonEyebrow={`02 ┬À ${copy.analysisRunningTitle}`}
+      lessonEyebrow={`02 · ${copy.analysisRunningTitle}`}
       title={copy.analysisRunningHint}
       learnGoal={copy.learnGoals[1]}
     >
       <div className="space-y-4">
         {degraded && allDone ? (
-          <p role="status" className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-warn">
-            {copy.degradedBanner}
-          </p>
+          <DegradedNotice
+            title={copy.degradedBanner}
+            missing={copy.degradedMissing}
+            impact={copy.degradedImpact}
+          />
         ) : null}
 
         <div className="lesson-card fade-in p-5 sm:p-6">
@@ -77,7 +80,7 @@ export function AnalysisScreen({
                 >
                   <span className="flex w-7 shrink-0 items-start justify-center pt-0.5">
                     {state === 'done' ? (
-                      <Check size={18} aria-label="Termin├®" />
+                      <Check size={18} aria-label="Terminé" />
                     ) : state === 'active' ? (
                       <Loader2
                         size={18}
